@@ -1,0 +1,47 @@
+TICKET OPTION : mise en ligne et installation
+=============================================
+
+CONTENU DU DOSSIER
+  index.html                  application client
+  admin/index.html            espace organisateur
+  manifest.webmanifest        carte d'identité de l'appli (nom, icônes, couleurs)
+  sw.js, admin/sw.js          fonctionnement hors-ligne
+  icons/                      icônes (Android, iPhone, navigateur)
+  vercel.json                 réglages pour Vercel (fichiers à mettre à jour sans cache)
+
+IMPORTANT : l'option « Installer » ne marche QUE sur une adresse en https
+(ou sur localhost). Ouvrir index.html directement depuis le téléphone ou
+l'ordinateur ne suffit pas.
+
+METTRE EN LIGNE AVEC GITHUB + VERCEL
+  1. Crée un compte sur github.com, puis un dépôt (New repository).
+  2. Dans le dépôt : Add file > Upload files, puis glisse le CONTENU du
+     dossier (index.html, admin, icons, sw.js, manifest.webmanifest,
+     vercel.json, LISEZMOI.txt). index.html doit être à la racine du dépôt.
+  3. Clique sur Commit changes.
+  4. Sur vercel.com : Add New > Project > Import ton dépôt > Deploy.
+     (Framework : Other. Laisse Build Command et Output Directory vides.)
+  5. Application client : https://ton-projet.vercel.app/
+     Espace organisateur : https://ton-projet.vercel.app/admin/
+
+INSTALLER SUR LE TÉLÉPHONE
+  Android (Chrome) : ouvre l'adresse. Touche le bouton « Installer » de
+     l'appli, ou menu (3 points) > Installer l'application.
+  iPhone (Safari uniquement) : ouvre l'adresse > bouton Partager >
+     « Sur l'écran d'accueil » > Ajouter.
+  Ordinateur (Chrome / Edge) : icône d'installation à droite de la barre
+     d'adresse.
+  L'espace organisateur s'installe séparément, depuis /admin/.
+
+METTRE À JOUR APRÈS UNE MODIFICATION
+  1. Dans sw.js (et admin/sw.js), change VERSION (ex. 'to-app-v2').
+  2. Sur GitHub, remplace les fichiers modifiés (Add file > Upload files) :
+     Vercel redéploie tout seul.
+  Sans ce changement, les téléphones peuvent garder l'ancienne version.
+
+SUPABASE
+  Les comptes clients utilisent déjà ton projet Supabase (voir index.html,
+  bloc CLOUD). Exécute d'abord supabase_full_setup.sql dans SQL Editor,
+  sinon l'inscription renverra une erreur.
+  Les événements, billets et ventes restent pour l'instant enregistrés
+  dans le navigateur de chaque appareil.
