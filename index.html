@@ -1,0 +1,1990 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ticket Option App</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#d3182c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ticket Option">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+
+/* Layout: single-column mobile app shell, scrolling content, fixed bottom tab bar, bottom sheets for create and checkout. */
+:root{
+  --bg:#f6f3f2; --surface:#ffffff; --fg:#1d1416; --muted:#7b6f72; --line:#e8e0e1;
+  --accent:#d3182c; --accent-ink:#ffffff; --accent-soft:#fbe4e7;
+  --ok:#17935f; --ok-soft:#dff3ea; --warn:#f4b400; --warn-ink:#3a2c00; --hot:#e8123f;
+  --overlay:rgba(20,10,12,.55);
+  --f-display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --f-body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#130f10; --surface:#1d1719; --fg:#f5eeee; --muted:#a2969a; --line:#312729;
+  --accent:#ef3347; --accent-ink:#ffffff; --accent-soft:#3a1a1f;
+  --ok:#35c58a; --ok-soft:#14352a; --warn:#f4b400; --warn-ink:#2b2100; --hot:#ff4a6d;
+  --overlay:rgba(0,0,0,.65); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#130f10; --surface:#1d1719; --fg:#f5eeee; --muted:#a2969a; --line:#312729;
+  --accent:#ef3347; --accent-ink:#ffffff; --accent-soft:#3a1a1f;
+  --ok:#35c58a; --ok-soft:#14352a; --warn:#f4b400; --warn-ink:#2b2100; --hot:#ff4a6d;
+  --overlay:rgba(0,0,0,.65); color-scheme:dark}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg{display:block}
+.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+#app{height:100%;max-width:520px;margin:0 auto;position:relative;display:flex;flex-direction:column}
+#view{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:24px;scrollbar-width:none}
+#view::-webkit-scrollbar{display:none}
+
+/* top bars */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 10px}
+.pill-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;font-size:17px}
+.flag{width:22px;height:15px;border-radius:2px;display:inline-block;overflow:hidden;flex:none}
+.round-btn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;position:relative}
+.round-btn.filled{background:var(--surface);border:1px solid var(--line)}
+.badge{position:absolute;top:2px;right:2px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.icons{display:flex;gap:4px}
+
+.search{display:flex;align-items:center;gap:10px;height:50px;border-radius:25px;border:1px solid var(--line);background:var(--surface);padding:0 18px;color:var(--muted)}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg)}
+.search input::placeholder{color:var(--muted)}
+
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:26px 0 12px}
+.section-head h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:27px;letter-spacing:-.02em;line-height:1.05;text-wrap:balance}
+.section-head p{margin:2px 0 0;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 20px;border-radius:23px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+.btn.sm{height:40px;padding:0 16px;font-size:14px}
+.btn.block{display:flex;width:100%;height:52px;border-radius:26px;font-size:16px}
+.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.btn.line{background:var(--surface);border:1px solid var(--line);color:var(--fg)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:active{transform:scale(.985)}
+
+/* horizontal rails */
+.rail{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:2px max(16px,env(safe-area-inset-left,0px)) 6px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail>*{scroll-snap-align:start;flex:none}
+
+/* event card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;overflow:hidden;width:min(86%,340px);text-align:left}
+.card .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.card h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:19px;line-height:1.1;letter-spacing:-.01em;text-transform:uppercase;text-wrap:balance}
+.meta{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;min-width:0}
+.meta .ic{width:18px;height:18px;flex:none}
+.meta span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.likes{display:flex;flex-direction:column;align-items:center;color:var(--muted);font-size:13px;gap:2px;flex:none}
+
+/* poster */
+.poster{position:relative;aspect-ratio:4/3;overflow:hidden;color:#fff;isolation:isolate}
+.poster.tall{aspect-ratio:3/2}
+.poster .bg{position:absolute;inset:0;z-index:-2}
+.poster .shape{position:absolute;z-index:-1;border-radius:50%}
+.poster .tag{position:absolute;left:12px;top:12px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 14px;font-size:14px;font-weight:500}
+.poster .verified{position:absolute;right:12px;top:12px;width:38px;height:36px;border-radius:10px;background:#35b886;display:grid;place-items:center}
+.poster .verified .ic{width:20px;height:20px;color:#fff}
+.poster .big{position:absolute;left:16px;right:16px;bottom:14px;font-family:var(--f-display);font-weight:800;font-size:clamp(34px,11vw,56px);line-height:.88;letter-spacing:-.03em;text-transform:uppercase;text-wrap:balance}
+.poster .small{position:absolute;left:16px;bottom:calc(14px + 100% * 0);font-size:12px}
+.poster .when{position:absolute;right:14px;bottom:14px;font-family:var(--f-display);font-weight:700;font-size:13px;text-align:right;line-height:1.2;text-transform:uppercase;letter-spacing:.04em}
+
+/* cotisation */
+.coti{width:min(86%,340px)}
+.progress{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.coti-row{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.coti-row b{color:var(--fg);font-family:var(--f-display);font-size:16px}
+
+/* tab bar */
+.tabbar{flex:none;display:grid;grid-template-columns:1fr 1fr 74px 1fr 1fr;align-items:center;background:var(--surface);border-top:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:8px max(8px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px))}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:16px;font-size:12px;font-weight:500;color:var(--muted)}
+.tab.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.fab{width:58px;height:58px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;margin:-26px auto 0;box-shadow:0 8px 20px rgba(211,24,44,.35)}
+.fab .ic{width:28px;height:28px;stroke-width:2.2}
+.avatar{width:100px;height:100px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:38px;border:5px solid var(--bg);margin-top:-50px}
+.avatar.mini{width:26px;height:26px;font-size:11px;border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent);margin:0}
+
+/* detail */
+.detail-top{display:flex;justify-content:space-between;padding:14px 0 8px}
+.detail-top .round-btn{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.detail h1{margin:6px 0 0;font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1.02;letter-spacing:-.02em;text-transform:uppercase;text-wrap:balance}
+.detail .sub{color:var(--muted);font-weight:500;font-size:17px;margin-top:2px}
+.detail .rows{display:flex;flex-direction:column;gap:12px;margin:16px 0}
+.detail .row{display:flex;gap:12px;align-items:flex-start;font-size:16px}
+.detail .row .ic{color:var(--muted);margin-top:1px;flex:none}
+.detail .row a,.detail .row .org{color:var(--accent);font-weight:500}
+.tabs2{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);margin:18px 0 16px}
+.tabs2 button{padding:14px 0;font-size:18px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px;font-weight:500}
+.tabs2 button.on{color:var(--accent);border-color:var(--accent);font-weight:700}
+.dates{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.date-chip{min-width:132px;padding:12px 16px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line);text-align:left}
+.date-chip small{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.date-chip strong{display:block;font-family:var(--f-display);font-size:34px;line-height:1;margin:2px 0}
+.date-chip span{font-size:14px;color:var(--muted)}
+.date-chip.on{background:var(--accent-soft);border-color:var(--accent)}
+.date-chip.on strong,.date-chip.on small{color:var(--accent)}
+.label-cap{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:0 0 4px}
+.venue-name{font-family:var(--f-display);font-weight:700;font-size:20px}
+.tier{background:var(--surface);border-radius:20px;padding:16px;margin-top:14px;border:1px solid var(--line)}
+.tier-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tier h4{margin:0;font-family:var(--f-display);font-weight:700;font-size:20px;line-height:1.1;text-transform:uppercase;text-wrap:balance;min-width:0}
+.status{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-size:12.5px;font-weight:700;text-transform:uppercase;white-space:nowrap;flex:none}
+.status .ic{width:15px;height:15px}
+.status.out{background:var(--accent-soft);color:var(--accent)}
+.status.low{background:var(--warn);color:var(--warn-ink)}
+.status.hot{background:var(--hot);color:#fff}
+.tier-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.price{font-family:var(--f-display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.stepper{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:16px;overflow:hidden}
+.stepper button{width:46px;height:44px;display:grid;place-items:center}
+.stepper button:disabled{opacity:.3}
+.stepper output{width:44px;text-align:center;font-weight:700;font-size:17px;border-inline:1px solid var(--line);line-height:44px;font-variant-numeric:tabular-nums}
+.tier details{margin-top:10px;color:var(--muted);font-size:14px}
+.tier summary{color:var(--accent);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;font-size:15px}
+.tier summary::-webkit-details-marker{display:none}
+.tier details p{margin:8px 0 0}
+.tier.soldout{opacity:.85}
+.cartbar{position:sticky;bottom:0;margin:20px calc(-1 * max(16px,env(safe-area-inset-left,0px))) -24px;padding:12px max(16px,env(safe-area-inset-left,0px)) 14px;background:var(--surface);border-top:1px solid var(--line);display:flex;align-items:center;gap:14px}
+.cartbar .tot{flex:1;min-width:0}
+.cartbar .tot small{color:var(--muted);display:block;font-size:13px}
+.cartbar .tot b{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums}
+.cartbar .btn{height:50px;padding:0 24px}
+.about p{margin:0 0 12px;line-height:1.55}
+.about dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 16px}
+.about dt{color:var(--muted)} .about dd{margin:0;font-weight:500;min-width:0}
+
+/* lists */
+.list{display:flex;flex-direction:column;background:var(--surface);border-radius:20px;border:1px solid var(--line);overflow:hidden}
+.list-item{display:flex;align-items:center;gap:16px;padding:18px 16px;font-size:18px;text-align:left;width:100%}
+.list-item+.list-item{border-top:1px solid var(--line)}
+.list-item .ic{color:var(--muted)}
+.list-item .chev{margin-left:auto;width:20px;height:20px}
+.cover{height:128px;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));background:linear-gradient(135deg,var(--accent),#8f0f1f);position:relative;overflow:hidden;color:#fff}
+.cover::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 22px,rgba(255,255,255,.06) 22px 23px)}
+.cover .acts{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:14px;display:flex;gap:10px}
+.cover .acts button{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.35);display:grid;place-items:center;color:#fff}
+.profile h1{margin:8px 0 2px;font-family:var(--f-display);font-weight:800;font-size:30px}
+.profile .stats{display:flex;gap:6px;flex-wrap:wrap;color:var(--muted);margin:10px 0 18px}
+.profile .stats b{color:var(--fg);font-family:var(--f-display);font-size:22px}
+
+/* wallet */
+.wallet-card{background:var(--surface);border-radius:26px;padding:22px;border:1px solid var(--line)}
+.wallet-card .big{font-family:var(--f-display);font-weight:800;font-size:46px;line-height:1;font-variant-numeric:tabular-nums}
+.wallet-card .big small{font-size:18px;color:var(--muted);font-weight:500;margin-left:6px}
+.wrow{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:17px;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:10px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;color:var(--muted);padding:56px 24px}
+.empty .ic{width:64px;height:64px;stroke-width:1.2;opacity:.6}
+.empty h3{margin:8px 0 0;font-family:var(--f-display);font-size:22px;color:var(--fg)}
+.empty p{margin:0;max-width:30ch}
+
+/* orders */
+.order{display:flex;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px;margin-bottom:12px;width:100%;text-align:left;align-items:center}
+.order .thumb{width:76px;height:76px;border-radius:14px;overflow:hidden;position:relative;flex:none}
+.order .info{min-width:0;flex:1}
+.order h4{margin:0;font-family:var(--f-display);font-size:16px;text-transform:uppercase;line-height:1.1}
+.order small{color:var(--muted);display:block;margin-top:3px}
+.tag-ok{display:inline-block;margin-top:6px;background:var(--ok-soft);color:var(--ok);border-radius:10px;font-size:12px;font-weight:700;padding:3px 10px;text-transform:uppercase}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:var(--overlay);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:28px 28px 0 0;padding:12px max(20px,env(safe-area-inset-left,0px)) calc(20px + env(safe-area-inset-bottom,0px));max-height:92%;overflow-y:auto;animation:up .25s ease-out}
+.sheet .grab{width:56px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 18px}
+.sheet h3{margin:0 0 16px;font-family:var(--f-display);font-weight:800;font-size:25px;text-align:center;text-wrap:balance}
+.choice{display:flex;align-items:center;gap:16px;width:100%;text-align:left;background:var(--bg);border-radius:20px;padding:18px 16px;margin-bottom:12px}
+.choice .circle{width:62px;height:62px;border-radius:50%;background:var(--surface);display:grid;place-items:center;color:var(--accent);flex:none}
+.choice .circle .ic{width:28px;height:28px}
+.choice b{display:block;font-family:var(--f-display);font-size:20px}
+.choice span{color:var(--muted);font-size:15px;display:block;margin-top:2px}
+.choice .chev{margin-left:auto;color:var(--muted);flex:none}
+.cancel{display:block;width:100%;padding:16px;text-align:center;font-size:18px;color:var(--muted)}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* forms */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.field input,.field select{height:50px;border-radius:16px;border:1.5px solid var(--line);background:var(--bg);padding:0 14px;width:100%;min-width:0}
+.field input:focus,.field select:focus{border-color:var(--accent);outline:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ops{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.op{border:1.5px solid var(--line);border-radius:16px;padding:14px 6px;text-align:center;font-weight:700;font-size:13.5px;line-height:1.15;background:var(--bg)}
+.op i{display:block;width:30px;height:30px;border-radius:50%;margin:0 auto 8px}
+.op.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.sum{background:var(--bg);border-radius:16px;padding:14px 16px;margin-bottom:16px}
+.sum div{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-variant-numeric:tabular-nums}
+.sum div.t{border-top:1px dashed var(--line);margin-top:6px;padding-top:10px;font-weight:700;font-family:var(--f-display);font-size:18px}
+.sum span{color:var(--muted)} .sum div.t span{color:var(--fg)}
+
+/* ticket */
+.ticket{background:var(--bg);border-radius:22px;overflow:hidden;margin-bottom:16px;border:1px solid var(--line)}
+.ticket .tp{padding:16px}
+.ticket h4{margin:0 0 6px;font-family:var(--f-display);font-size:21px;text-transform:uppercase;line-height:1.05}
+.ticket .perf{border-top:2px dashed var(--line);position:relative;padding:16px;display:flex;gap:16px;align-items:center}
+.ticket .perf::before,.ticket .perf::after{content:"";position:absolute;top:-11px;width:20px;height:20px;border-radius:50%;background:var(--surface)}
+.ticket .perf::before{left:-10px}.ticket .perf::after{right:-10px}
+.qr{width:96px;height:96px;flex:none;color:var(--fg)}
+.success-ic{width:68px;height:68px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;margin:4px auto 12px}
+.success-ic .ic{width:34px;height:34px;stroke-width:2.4}
+.note{font-size:12.5px;color:var(--muted);text-align:center;padding:14px 0 4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:12px 20px;border-radius:24px;font-weight:500;z-index:80;animation:fade .2s;max-width:90%}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- ajouts v2 : installation, tickets, liens ---- */
+a.list-item{color:inherit;text-decoration:none}
+a.btn{text-decoration:none}
+.field input,.field select,.search input{font-size:16px}
+.list-item.accent{color:var(--accent);font-weight:700}
+.list-item.accent .ic{color:var(--accent)}
+.install{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px 8px 12px 14px;margin:2px 0 14px}
+.install .install-ic{width:46px;height:46px;border-radius:14px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.install .txt{min-width:0;flex:1}
+.install b{display:block;font-family:var(--f-display);font-size:16px;line-height:1.15}
+.install .t{display:block;color:var(--muted);font-size:13px;line-height:1.3;margin-top:2px}
+.install .x{width:36px;height:36px;display:grid;place-items:center;color:var(--muted);flex:none;border-radius:50%}
+.install .btn{flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:4px 11px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;flex:none}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.used{background:var(--warn);color:var(--warn-ink)}
+.chip.bad{background:var(--accent-soft);color:var(--accent)}
+.chip.draft{background:var(--line);color:var(--muted)}
+.tk-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -2px 6px;padding:0 2px 6px;scrollbar-width:none}
+.tk-rail::-webkit-scrollbar{display:none}
+.tk{flex:none;width:100%;scroll-snap-align:center;background:var(--bg);border:1px solid var(--line);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.tk-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tk h4{margin:0;font-family:var(--f-display);font-size:20px;line-height:1.05;text-transform:uppercase;text-wrap:balance;min-width:0}
+.tk-perf{display:flex;gap:14px;align-items:center;border-top:2px dashed var(--line);margin-top:6px;padding-top:14px}
+.qrbox{width:128px;height:128px;flex:none;border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--line)}
+.qrbox.dim{opacity:.25}
+.qr{width:100%;height:100%;display:block}
+.tk-info{display:flex;flex-direction:column;gap:6px;min-width:0;align-items:flex-start}
+.tk-info .code{font-family:var(--f-display);font-size:19px;letter-spacing:.05em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tk-info span.who{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.hint{text-align:center;color:var(--muted);font-size:13px;margin:0 0 12px}
+.steps{margin:0 0 16px;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.steps li{display:flex;gap:14px;align-items:flex-start;counter-increment:s;line-height:1.35}
+.steps li::before{content:counter(s);width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;display:grid;place-items:center;flex:none;font-family:var(--f-display)}
+.steps .ic{display:inline-block;vertical-align:-5px;width:20px;height:20px;color:var(--accent)}
+.row-item{display:flex;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px;margin-bottom:12px;width:100%;text-align:left;align-items:center}
+.row-item .info{min-width:0;flex:1}
+.row-item h4{margin:0;font-family:var(--f-display);font-size:16px;text-transform:uppercase;line-height:1.1;text-wrap:balance}
+.row-item small{color:var(--muted);display:block;margin-top:3px}
+.row-item .chip{margin-top:6px}
+.row-item .thumb{width:76px;height:76px;border-radius:14px;overflow:hidden;position:relative;flex:none}
+
+.pill-btn{white-space:nowrap;flex:none}
+.topbar .icons{flex:none}
+.cartbar{bottom:-24px}
+.install{display:grid;grid-template-columns:46px 1fr;gap:10px 12px;position:relative;padding:14px}
+.install .txt{padding-right:30px}
+.install .btn{grid-column:1/-1;width:100%}
+.install .x{position:absolute;top:6px;right:6px}
+
+/* ---- v3 : panier, paiement, commandes, portefeuille, publications ---- */
+:root{--danger:#b3261e}
+textarea{font:inherit;color:inherit;font-size:16px;width:100%;border-radius:16px;border:1.5px solid var(--line);background:var(--bg);padding:12px 14px;resize:vertical;min-height:84px}
+textarea:focus{border-color:var(--accent);outline:0}
+.field label i{color:var(--accent);font-style:normal}
+.btn.danger{background:var(--danger);color:#fff}
+.list-item.danger,.list-item.danger .ic{color:var(--danger)}
+.ttl{margin:0;font-family:var(--f-display);font-size:28px;font-weight:800}
+.topbar .ttl{flex:1}
+.mh{margin:14px 0 8px;font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1.05;text-transform:uppercase;text-wrap:balance}
+.subh{margin:22px 0 10px;font-family:var(--f-display);font-size:19px}
+
+/* segments et onglets */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--line);border-radius:20px;padding:5px;margin:4px 0 14px}
+.seg button{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;color:var(--muted);font-weight:500;font-size:16px;min-width:0}
+.seg button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seg button.on{background:var(--surface);color:var(--accent);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.seg .ic{width:22px;height:22px;flex:none}
+.subtabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 14px;padding:0 max(16px,env(safe-area-inset-left,0px));scrollbar-width:none}
+.subtabs::-webkit-scrollbar{display:none}
+.subtabs button{flex:none;padding:14px 12px;font-size:17px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px;font-weight:500;white-space:nowrap}
+.subtabs button i{font-style:normal;font-size:12px;background:var(--line);border-radius:10px;padding:1px 7px;margin-left:4px;font-weight:700}
+.subtabs button.on{color:var(--accent);border-color:var(--accent);font-weight:700}
+.subtabs button.on i{background:var(--accent-soft)}
+
+/* dépliants */
+.collapse{background:var(--surface);border:1px solid var(--line);border-radius:18px;margin-bottom:14px}
+.collapse>summary{display:flex;align-items:center;gap:12px;padding:14px;list-style:none;cursor:pointer;font-weight:500;font-size:17px}
+.collapse>summary::-webkit-details-marker{display:none}
+.collapse .ci{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.collapse>summary .chev{margin-left:auto;color:var(--muted);transition:transform .2s;flex:none}
+.collapse[open]>summary .chev{transform:rotate(180deg)}
+.collapse .cb{padding:0 14px 14px;color:var(--muted);font-size:14.5px}
+.collapse .cb p{margin:0 0 10px}
+.collapse.find{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.collapse.find .ci{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.collapse.find>summary{color:var(--fg)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;color:var(--fg)}
+.kpis>div{background:var(--bg);border-radius:14px;padding:12px 10px;text-align:center;min-width:0}
+.kpis b{display:block;font-family:var(--f-display);font-size:20px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpis span{font-size:12px;color:var(--muted)}
+.collapse .kpis{padding:0 14px 14px}
+.collapse .cb.kpis{padding:0 14px 14px}
+
+/* boîtes et lignes */
+.box{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px}
+.box .bh{margin:0 0 12px;display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:19px}
+.box .bh .ic{width:22px;height:22px;color:var(--muted)}
+.rl{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:6px 0;font-variant-numeric:tabular-nums}
+.rl span{color:var(--muted);min-width:0}
+.rl b{text-align:right}
+.rl.tot{border-top:1px dashed var(--line);margin-top:6px;padding-top:12px;font-family:var(--f-display);font-size:19px}
+.rl.tot span{color:var(--fg)} .rl.tot b{color:var(--accent)}
+.rl small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
+.rl.guest{border-bottom:1px solid var(--line);padding:10px 0}
+.box.total{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-display);font-size:20px}
+.box.total b{color:var(--accent);font-size:26px}
+.mtier{margin-bottom:14px}.mtier small{color:var(--muted)}.mtier .progress{margin:4px 0}
+
+/* récapitulatif de commande */
+.rc-top{position:sticky;top:0;background:var(--bg);z-index:5;padding-bottom:8px}
+.rc-title{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.rc-title b{font-family:var(--f-display);font-size:19px}
+.timer{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);font-size:15px}
+.timer .ic{width:17px;height:17px}
+.rc-ev{display:flex;gap:14px;align-items:center}
+.rc-ev .thumb{width:68px;height:68px;border-radius:14px;overflow:hidden;position:relative;flex:none}
+.rc-ev h4{margin:0;font-family:var(--f-display);font-size:17px;text-transform:uppercase;line-height:1.1}
+.rc-ev small{display:block;color:var(--muted);margin-top:3px}
+.stickyfoot{position:sticky;bottom:-24px;margin:16px calc(-1 * max(16px,env(safe-area-inset-left,0px))) -24px;padding:12px max(16px,env(safe-area-inset-left,0px)) calc(14px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+
+/* panier collant sur la page événement */
+.cartpanel{position:sticky;bottom:-24px;margin:20px calc(-1 * max(16px,env(safe-area-inset-left,0px))) -24px;padding:14px max(16px,env(safe-area-inset-left,0px)) calc(14px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:10px;z-index:6}
+.cp-row{display:flex;align-items:center;gap:10px}
+.cp-total{flex:1;min-width:0;font-family:var(--f-display);color:var(--accent);font-size:20px}
+.cp-total span{font-weight:800}.cp-total b{font-size:26px;font-variant-numeric:tabular-nums}.cp-total small{font-size:15px}
+.pill{background:var(--accent-soft);color:var(--accent);border-radius:20px;padding:8px 14px;font-weight:700;font-size:15px;white-space:nowrap}
+.xbtn{width:40px;height:40px;border-radius:50%;background:var(--line);display:grid;place-items:center;flex:none}
+.coupon{display:flex;align-items:center;gap:10px;width:100%;height:52px;border:1.5px solid var(--line);border-radius:16px;padding:0 14px;color:var(--muted);font-size:17px}
+.coupon .chev{margin-left:auto}
+.coupon span{flex:1;text-align:left}
+.cp-in{display:flex;gap:8px}
+.cp-in input{flex:1;min-width:0;height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);padding:0 14px;font-size:16px;text-transform:uppercase}
+.cp-in input:focus{border-color:var(--accent);outline:0}
+.cp-err{color:var(--accent);margin:0;min-height:0;font-size:14px}
+.cp-err:empty{display:none}
+.cp-disc{display:flex;align-items:center;gap:10px;background:var(--ok-soft);color:var(--ok);border-radius:14px;padding:10px 12px;font-weight:600;font-size:15px}
+.cp-disc span{flex:1}.cp-disc button{width:28px;height:28px;display:grid;place-items:center}.cp-disc .ic{width:18px;height:18px}
+.status.risk{background:#e8451f;color:#fff}
+.notice{display:flex;gap:10px;align-items:center;background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:10px 14px;font-weight:500;font-size:14.5px;margin:6px 0}
+.notice .ic{width:20px;height:20px;flex:none}
+.favb{position:absolute;right:12px;top:12px;width:38px;height:38px;border-radius:50%;background:#fff;display:grid;place-items:center;color:#130f10}
+.favb .ic{width:20px;height:20px}
+.tklist{display:flex;flex-direction:column;gap:14px}
+.tklist .tk{width:100%}
+.empty .ring{width:112px;height:112px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;margin-bottom:10px}
+.empty .ring .ic{width:50px;height:50px;stroke-width:1.5;opacity:.75;color:var(--accent)}
+.empty h3{font-size:25px}
+.empty p{max-width:32ch}
+
+/* portefeuille */
+.info-i{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--muted);color:var(--muted);font-size:12px;font-weight:700;display:inline-grid;place-items:center;margin-left:6px;vertical-align:1px}
+.tx{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.txi{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none}
+.txi.in{background:var(--ok-soft);color:var(--ok)}.txi.out{background:var(--accent-soft);color:var(--accent)}
+.txm{flex:1;min-width:0}.txm b{display:block;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.txm small{color:var(--muted);font-size:12.5px}
+.txa{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}.txa b{font-family:var(--f-display);font-size:16px;font-variant-numeric:tabular-nums}.txa b.neg{color:var(--accent)}
+.txa .chip{padding:2px 8px;font-size:10.5px}
+
+/* notifications, page publique, réglages */
+.notif{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.notif.new{border-color:var(--accent);background:var(--accent-soft)}
+.notif .ni{width:38px;height:38px;border-radius:50%;background:var(--bg);display:grid;place-items:center;color:var(--accent);flex:none}
+.notif b{display:block;font-weight:600;font-size:15px;line-height:1.35}.notif small{color:var(--muted)}
+.pubhead{text-align:center;padding:6px 0 20px}.pubhead h1{margin:12px 0 2px;font-family:var(--f-display);font-size:28px}.pubhead p{margin:0;color:var(--muted)}
+.opts,.chips{display:flex;gap:8px;flex-wrap:wrap}
+.opt{border:1.5px solid var(--line);border-radius:14px;padding:10px 16px;font-weight:600;background:var(--bg)}
+.opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.chips{margin-bottom:14px}
+.check{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:16px}
+.check input{width:22px;height:22px;accent-color:var(--accent)}
+
+/* paiement */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ph button{display:flex;align-items:center;gap:8px;font-size:20px;font-family:var(--f-display);font-weight:600}
+.ph .amt{color:var(--accent);font-family:var(--f-display);font-size:23px}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 16px}
+.mt{border:1.5px solid var(--line);border-radius:18px;padding:10px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:600;font-size:13px;text-align:center;background:var(--surface);line-height:1.15}
+.mt.on{border-color:var(--accent);background:var(--accent-soft)}
+.mlogo{width:64px;height:64px;border-radius:16px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:-.02em}
+.mlogo .ic{width:30px;height:30px}
+.sumbox{background:var(--bg)}
+.dial{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:16px;background:var(--bg);overflow:hidden}
+.dial span{padding:0 12px;font-weight:700;color:var(--muted);border-right:1px solid var(--line);height:50px;display:grid;place-items:center}
+.dial input{border:0!important;border-radius:0!important;flex:1;height:50px}
+.spin{width:54px;height:54px;border-radius:50%;border:5px solid var(--accent-soft);border-top-color:var(--accent);margin:8px auto 18px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.demo{border:1.5px dashed var(--line);border-radius:16px;padding:12px;margin-bottom:6px;text-align:center}
+.demo b{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.demo p{margin:4px 0 10px;color:var(--muted);font-size:14px}
+.qrbig{width:224px;height:224px;margin:4px auto;border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--line)}
+.qrbig.dim{opacity:.3}
+.acts2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.acts2 .btn{height:48px;font-size:15px}
+.faq{border-bottom:1px solid var(--line);padding:2px 0}.faq summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 0;font-weight:600;cursor:pointer;list-style:none}.faq summary::-webkit-details-marker{display:none}.faq p{margin:0 0 14px;color:var(--muted)}
+.stars{display:flex;justify-content:center;gap:6px;margin-bottom:16px}.stars button{width:52px;height:52px;display:grid;place-items:center;color:var(--muted)}.stars .ic{width:38px;height:38px}.stars button.on{color:#f4b400}.stars button.on .ic{fill:#f4b400}
+.verdict{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.verdict b{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-size:20px}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)}.verdict.warn{background:#fff3cd;color:#5c4400}.verdict.bad{background:var(--accent-soft);color:var(--accent)}
+.verdict span,.verdict small{color:var(--fg)}
+.camwrap{border-radius:16px;overflow:hidden;margin-top:10px;background:#000}.camwrap video{width:100%;display:block;max-height:240px;object-fit:cover}
+
+/* formulaires */
+.frow{display:grid;gap:8px;margin-bottom:10px;align-items:center}
+.frow.dr{grid-template-columns:1fr 110px 40px}
+.frow.tr{grid-template-columns:1fr 92px 78px 40px}
+.frow.tr .t-desc{grid-column:1/-1}
+.frow input{height:46px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);padding:0 12px;width:100%;min-width:0;font-size:16px}
+.frow input:focus{border-color:var(--accent);outline:0}
+.frow .rm{width:40px;height:40px;border-radius:50%;background:var(--line);display:grid;place-items:center}
+.frow .rm:disabled{opacity:.3}
+.frow.tr{padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.imgup{display:grid;place-items:center;aspect-ratio:16/9;border:2px dashed var(--line);border-radius:18px;background:var(--surface);cursor:pointer;overflow:hidden;color:var(--muted);text-transform:none!important;letter-spacing:0!important;font-size:15px!important}
+.imgup>span{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;height:100%;justify-content:center}
+.imgup .ic{width:36px;height:36px}.imgup small{font-size:13px}
+.imgup img{width:100%;height:100%;object-fit:cover}
+[data-theme=dark] .verdict.warn{background:#4a3a00;color:#ffe08a}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .verdict.warn{background:#4a3a00;color:#ffe08a}}
+
+.authscreen{min-height:100vh;display:grid;place-items:start center;padding:max(28px,env(safe-area-inset-top)) 18px 40px;background:var(--bg);color:var(--ink,inherit)}
+.authscreen[hidden]{display:none}
+.authbox{width:100%;max-width:420px}
+.authbox h1{font-family:var(--f-display);font-size:30px;text-align:center;margin:10px 0 6px;text-transform:uppercase}
+.authbox .hint{text-align:center}
+.auth-logo{width:64px;height:64px;border-radius:20px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;margin:8px auto 0}
+.auth-logo .ic{width:32px;height:32px}
+.authbox .seg{display:flex;margin:16px 0}.authbox .seg button{flex:1}
+
+</style>
+<div id="app">
+  <main id="view" tabindex="-1"></main>
+  <nav class="tabbar" aria-label="Navigation principale" id="tabbar"></nav>
+</div>
+<div id="layer"></div>
+<script>
+/* Ticket Option : générateur de QR code (octets, correction M, versions 1 à 3, jusqu'à 42 caractères). */
+(function (g) {
+  'use strict';
+  var CAP = { 1: [16, 10], 2: [28, 16], 3: [44, 26] }; /* [mots de données, mots de correction] niveau M */
+  var EXP = [], LOG = [];
+  (function () {
+    var x = 1;
+    for (var i = 0; i < 255; i++) { EXP[i] = x; LOG[x] = i; x <<= 1; if (x & 256) x ^= 0x11d; }
+    for (i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+  })();
+  function mul(a, b) { return a && b ? EXP[LOG[a] + LOG[b]] : 0; }
+  function divisor(deg) {
+    var r = [], i, j, root = 1;
+    for (i = 0; i < deg - 1; i++) r.push(0);
+    r.push(1);
+    for (i = 0; i < deg; i++) {
+      for (j = 0; j < deg; j++) { r[j] = mul(r[j], root); if (j + 1 < deg) r[j] ^= r[j + 1]; }
+      root = mul(root, 2);
+    }
+    return r;
+  }
+  function rsRemainder(data, deg) {
+    var div = divisor(deg), res = [], i;
+    for (i = 0; i < deg; i++) res.push(0);
+    data.forEach(function (b) {
+      var f = b ^ res.shift();
+      res.push(0);
+      for (var k = 0; k < deg; k++) res[k] ^= mul(div[k], f);
+    });
+    return res;
+  }
+  function utf8(str) {
+    var out = [], i, c;
+    var s = unescape(encodeURIComponent(str));
+    for (i = 0; i < s.length; i++) { c = s.charCodeAt(i); out.push(c); }
+    return out;
+  }
+  function bit(v, i) { return ((v >>> i) & 1) !== 0; }
+
+  function encode(text) {
+    var bytes = utf8(String(text)), ver = 0, v;
+    for (v = 1; v <= 3; v++) { if (bytes.length <= CAP[v][0] - 2) { ver = v; break; } }
+    if (!ver) throw new Error('Texte trop long pour le QR code');
+    var dataCw = CAP[ver][0], ecCw = CAP[ver][1], size = 17 + 4 * ver;
+
+    /* 1. Bits de données */
+    var bits = [];
+    function push(val, len) { for (var i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); }
+    push(4, 4); push(bytes.length, 8);
+    bytes.forEach(function (b) { push(b, 8); });
+    var maxBits = dataCw * 8;
+    push(0, Math.min(4, maxBits - bits.length));
+    while (bits.length % 8) bits.push(0);
+    var pad = 0xec;
+    while (bits.length < maxBits) { push(pad, 8); pad = pad === 0xec ? 0x11 : 0xec; }
+    var data = [];
+    for (var i = 0; i < bits.length; i += 8) {
+      var b = 0; for (var k = 0; k < 8; k++) b = (b << 1) | bits[i + k];
+      data.push(b);
+    }
+    var all = data.concat(rsRemainder(data, ecCw));
+
+    /* 2. Matrice et motifs fixes */
+    var mod = [], fn = [], y, x;
+    for (y = 0; y < size; y++) { mod.push(new Array(size).fill(false)); fn.push(new Array(size).fill(false)); }
+    function setFn(px, py, dark) { mod[py][px] = dark; fn[py][px] = true; }
+    for (i = 0; i < size; i++) { setFn(6, i, i % 2 === 0); setFn(i, 6, i % 2 === 0); }
+    function finder(cx, cy) {
+      for (var dy = -4; dy <= 4; dy++) for (var dx = -4; dx <= 4; dx++) {
+        var d = Math.max(Math.abs(dx), Math.abs(dy)), xx = cx + dx, yy = cy + dy;
+        if (xx >= 0 && xx < size && yy >= 0 && yy < size) setFn(xx, yy, d !== 2 && d !== 4);
+      }
+    }
+    finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+    if (ver >= 2) {
+      var c = size - 7;
+      for (var dy = -2; dy <= 2; dy++) for (var dx = -2; dx <= 2; dx++) setFn(c + dx, c + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+    }
+    function drawFormat(mask) {
+      var d = (0 << 3) | mask, rem = d; /* niveau M = 00 */
+      for (var n = 0; n < 10; n++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+      var f = ((d << 10) | rem) ^ 0x5412, j;
+      for (j = 0; j <= 5; j++) setFn(8, j, bit(f, j));
+      setFn(8, 7, bit(f, 6)); setFn(8, 8, bit(f, 7)); setFn(7, 8, bit(f, 8));
+      for (j = 9; j < 15; j++) setFn(14 - j, 8, bit(f, j));
+      for (j = 0; j < 8; j++) setFn(size - 1 - j, 8, bit(f, j));
+      for (j = 8; j < 15; j++) setFn(8, size - 15 + j, bit(f, j));
+      setFn(8, size - 8, true);
+    }
+    drawFormat(0);
+
+    /* 3. Placement des données */
+    var idx = 0, right, vert, j2;
+    for (right = size - 1; right >= 1; right -= 2) {
+      if (right === 6) right = 5;
+      for (vert = 0; vert < size; vert++) {
+        for (j2 = 0; j2 < 2; j2++) {
+          x = right - j2;
+          var up = ((right + 1) & 2) === 0;
+          y = up ? size - 1 - vert : vert;
+          if (!fn[y][x] && idx < all.length * 8) { mod[y][x] = bit(all[idx >>> 3], 7 - (idx & 7)); idx++; }
+        }
+      }
+    }
+
+    /* 4. Masques */
+    var MASK = [
+      function (x, y) { return (x + y) % 2 === 0; },
+      function (x, y) { return y % 2 === 0; },
+      function (x, y) { return x % 3 === 0; },
+      function (x, y) { return (x + y) % 3 === 0; },
+      function (x, y) { return (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0; },
+      function (x, y) { return (x * y) % 2 + (x * y) % 3 === 0; },
+      function (x, y) { return ((x * y) % 2 + (x * y) % 3) % 2 === 0; },
+      function (x, y) { return ((x + y) % 2 + (x * y) % 3) % 2 === 0; }
+    ];
+    function applyMask(m) { for (var yy = 0; yy < size; yy++) for (var xx = 0; xx < size; xx++) if (!fn[yy][xx] && MASK[m](xx, yy)) mod[yy][xx] = !mod[yy][xx]; }
+    function penalty() {
+      var p = 0, a, b, run, dark = 0, line;
+      for (a = 0; a < size; a++) {
+        for (var dir = 0; dir < 2; dir++) {
+          run = 1; line = '';
+          for (b = 0; b < size; b++) {
+            var cur = dir ? mod[b][a] : mod[a][b];
+            line += cur ? '1' : '0';
+            if (b > 0) {
+              var prev = dir ? mod[b - 1][a] : mod[a][b - 1];
+              if (cur === prev) { run++; if (run === 5) p += 3; else if (run > 5) p++; } else run = 1;
+            }
+          }
+          var re = /10111010000|00001011101/g, mt;
+          while ((mt = re.exec(line))) { p += 40; re.lastIndex = mt.index + 1; }
+        }
+      }
+      for (y = 0; y < size - 1; y++) for (x = 0; x < size - 1; x++) {
+        var col = mod[y][x];
+        if (col === mod[y][x + 1] && col === mod[y + 1][x] && col === mod[y + 1][x + 1]) p += 3;
+      }
+      for (y = 0; y < size; y++) for (x = 0; x < size; x++) if (mod[y][x]) dark++;
+      p += 10 * Math.floor(Math.abs(dark * 100 / (size * size) - 50) / 5);
+      return p;
+    }
+    var best = 0, bestP = Infinity;
+    for (var m = 0; m < 8; m++) {
+      applyMask(m); drawFormat(m);
+      var pp = penalty();
+      if (pp < bestP) { bestP = pp; best = m; }
+      applyMask(m); /* annule */
+    }
+    applyMask(best); drawFormat(best);
+    return { size: size, version: ver, mask: best, get: function (r, c) { return mod[r][c]; } };
+  }
+
+  function svg(text, label) {
+    var q = encode(text), n = q.size, qz = 3, p = '', r, c;
+    for (r = 0; r < n; r++) for (c = 0; c < n; c++) if (q.get(r, c)) p += 'M' + c + ' ' + r + 'h1v1h-1z';
+    var t = n + 2 * qz;
+    return '<svg class="qr" viewBox="' + (-qz) + ' ' + (-qz) + ' ' + t + ' ' + t + '" shape-rendering="crispEdges" role="img" aria-label="' + (label || 'QR code') + '">' +
+      '<rect x="' + (-qz) + '" y="' + (-qz) + '" width="' + t + '" height="' + t + '" fill="#fff"/><path d="' + p + '" fill="#000"/></svg>';
+  }
+  g.QR = { encode: encode, svg: svg };
+  if (typeof module !== 'undefined' && module.exports) module.exports = g.QR;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Ticket Option : données partagées entre l'application et l'espace admin.
+   Tout est stocké dans localStorage (même site = mêmes données). Pour passer en ligne,
+   il suffit de remplacer load()/persist() par des appels à un serveur : le reste ne change pas. */
+(function (g) {
+  'use strict';
+  var KEY = 'to_db_v2', mem = null, subs = [];
+  var ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  var DAYS = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
+  var DAY_MS = 86400000;
+
+  /* ---------- utilitaires ---------- */
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return Number(n || 0).toLocaleString('fr-FR').replace(/[  ]/g, ' '); }
+  function uid(p) { return (p || 'id') + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3); }
+  function find(arr, id, key) { key = key || 'id'; for (var i = 0; i < arr.length; i++) if (arr[i][key] === id) return arr[i]; return null; }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function isoOf(ts) { var d = new Date(ts); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function parseIso(iso) { var p = String(iso).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function dateParts(dt) {
+    var d = parseIso(dt.iso), t = String(dt.time || '').replace(':', 'h');
+    return { w: DAYS[d.getDay()], d: pad2(d.getDate()), m: MONTHS[d.getMonth()], y: d.getFullYear(), t: t, short: DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()], full: DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() };
+  }
+  function dateTimeLabel(ts) { var d = new Date(ts); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ' à ' + pad2(d.getHours()) + 'h' + pad2(d.getMinutes()); }
+  function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  /* ---------- stockage ---------- */
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch (e) { /* stockage indisponible : on reste en mémoire */ } }
+  function emit() { subs.forEach(function (f) { try { f(); } catch (e) { } }); }
+  function commit() { persist(); emit(); }
+  function load() {
+    if (mem) return mem;
+    try { var r = localStorage.getItem(KEY); if (r) { var o = JSON.parse(r); if (o && (o.v === 2 || o.v === 3)) { mem = migrate(o); return mem; } } } catch (e) { }
+    mem = seed(); persist(); return mem;
+  }
+  if (g.addEventListener) g.addEventListener('storage', function (e) { if (e.key === KEY) { mem = null; load(); emit(); } });
+
+  /* v3 : réservations, coupons, retraits, contributions, notifications, messages, points de vente */
+  function seedCoupons() { return [{ code: 'TICKET10', type: 'pct', value: 10, evId: '', max: 0, used: 0, expires: '', active: true }, { code: 'BIENVENUE', type: 'fix', value: 1000, evId: '', max: 0, used: 0, expires: '', active: true }]; }
+  function seedPoints() { return [{ id: 'p1', name: 'Point de vente exemple', city: 'Ouagadougou', cc: 'BF', address: 'À remplacer par votre vrai point de vente', hours: '8h - 19h', demo: true }, { id: 'p2', name: 'Point de vente exemple', city: 'Abidjan', cc: 'CI', address: 'À remplacer par votre vrai point de vente', hours: '8h - 19h', demo: true }]; }
+  function migrate(o) {
+    o.v = 3; o.holds = o.holds || []; o.coupons = o.coupons || seedCoupons(); o.payouts = o.payouts || []; o.contribs = o.contribs || [];
+    o.notifs = o.notifs || []; o.messages = o.messages || []; o.reviews = o.reviews || []; o.points = o.points || seedPoints();
+    o.settings = o.settings || {}; if (o.settings.commission == null) o.settings.commission = 5; if (o.settings.minPayout == null) o.settings.minPayout = 1000;
+    return o;
+  }
+  function today() { return isoOf(Date.now()); }
+  function isPast(ev, dateIdx) { var d = ev && (ev.dates[dateIdx || 0] || ev.dates[0]); return !!d && d.iso < today(); }
+  var HOLD_MS = 20 * 60 * 1000;
+  function heldMap(db) {
+    var now = Date.now(), m = {}; db.holds = (db.holds || []).filter(function (h) { return h.expires > now; });
+    db.holds.forEach(function (h) { h.items.forEach(function (i) { m[i.tierId] = (m[i.tierId] || 0) + i.qty; }); }); return m;
+  }
+  /* ---------- règles métier ---------- */
+  function remaining(t) { var db = load(); return Math.max(0, (t.stock || 0) - (t.sold || 0) - (heldMap(db)[t.id] || 0)); }
+  function tierStatus(t) {
+    var rem = remaining(t);
+    if (rem <= 0) return 'out';
+    if (rem <= Math.max(3, Math.ceil(t.stock * 0.05))) return 'risk';
+    if (rem <= Math.max(5, Math.ceil(t.stock * 0.12))) return 'low';
+    if (t.stock > 0 && t.sold / t.stock >= 0.6) return 'hot';
+    return 'ok';
+  }
+  function eventState(ev) { return ev.tiers.length && ev.tiers.every(function (t) { return tierStatus(t) === 'out'; }) ? 'out' : 'open'; }
+  function minPrice(ev) {
+    var open = ev.tiers.filter(function (t) { return tierStatus(t) !== 'out'; }), src = open.length ? open : ev.tiers;
+    return src.length ? Math.min.apply(null, src.map(function (t) { return t.price; })) : 0;
+  }
+  function genCode(set) {
+    var c, i;
+    do { c = 'TO-'; for (i = 0; i < 8; i++) { c += ALPHA.charAt(Math.floor(Math.random() * ALPHA.length)); if (i === 3) c += '-'; } } while (set[c]);
+    set[c] = 1; return c;
+  }
+  function codeSet(db) { var s = {}; db.tickets.forEach(function (t) { s[t.code] = 1; }); return s; }
+  function normCode(raw) {
+    var s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (s.indexOf('TO') === 0) s = s.slice(2);
+    if (s.length !== 8) return null;
+    return 'TO-' + s.slice(0, 4) + '-' + s.slice(4);
+  }
+  function digits(s) { return String(s || '').replace(/\D/g, ''); }
+
+  function buildOrder(db, ev, dateIdx, items, buyer, channel, createdAt, set) {
+    var order = { id: uid('o'), ref: 'CMD-' + genRef(set), evId: ev.id, dateIdx: dateIdx, buyer: buyer, lines: [], total: 0, status: 'confirmed', createdAt: createdAt, channel: channel, device: channel === 'app' ? db.device : null };
+    var tickets = [];
+    items.forEach(function (it) {
+      var tier = find(ev.tiers, it.tierId);
+      order.lines.push({ tierId: tier.id, name: tier.name, price: tier.price, qty: it.qty });
+      order.total += tier.price * it.qty;
+      tier.sold = (tier.sold || 0) + it.qty;
+      for (var i = 0; i < it.qty; i++) tickets.push({ code: genCode(set), orderId: order.id, evId: ev.id, dateIdx: dateIdx, tierId: tier.id, tierName: tier.name, holder: buyer.name, status: 'valid', usedAt: null, createdAt: createdAt });
+    });
+    return { order: order, tickets: tickets };
+  }
+  function genRef(set) { var r; do { r = ''; for (var i = 0; i < 6; i++) r += ALPHA.charAt(Math.floor(Math.random() * ALPHA.length)); } while (set['R' + r]); set['R' + r] = 1; return r; }
+
+  function fmtN(n) { return Number(n || 0).toLocaleString('fr-FR').replace(/[  ]/g, ' '); }
+  function addNotif(db, device, text) { db.notifs = db.notifs || []; db.notifs.unshift({ id: uid('n'), device: device, text: text, ts: Date.now(), read: false }); if (db.notifs.length > 80) db.notifs.length = 80; }
+  function notifsOf() { var db = load(); return db.notifs.filter(function (n) { return n.device === db.device; }); }
+  function markNotifsRead() { var db = load(), ch = false; db.notifs.forEach(function (n) { if (n.device === db.device && !n.read) { n.read = true; ch = true; } }); if (ch) commit(); }
+  function checkCoupon(code, evId, subtotal) {
+    var db = load(); code = String(code || '').trim().toUpperCase(); if (!code) return { error: 'Entrez un code.' };
+    var c = find(db.coupons || [], code, 'code');
+    if (!c || !c.active) return { error: 'Ce code n\'est pas valide.' };
+    if (c.evId && c.evId !== evId) return { error: 'Ce code ne s\'applique pas à cet événement.' };
+    if (c.max && c.used >= c.max) return { error: 'Ce code a atteint sa limite d\'utilisation.' };
+    if (c.expires && c.expires < today()) return { error: 'Ce code a expiré.' };
+    var d = c.type === 'pct' ? Math.round(subtotal * c.value / 100) : Math.min(c.value, subtotal);
+    return { ok: true, coupon: c, discount: d };
+  }
+  /* Réserve des billets 20 minutes pendant le paiement. */
+  function hold(p) {
+    var db = load(), ev = find(db.events, p.evId); if (!ev) return { error: 'Événement introuvable.' };
+    db.holds = (db.holds || []).filter(function (h) { return !(h.device === db.device && h.evId === p.evId); });
+    var items = (p.items || []).filter(function (i) { return i.qty > 0; });
+    if (!items.length) return { error: 'Choisissez au moins un billet.' };
+    var m = heldMap(db);
+    for (var i = 0; i < items.length; i++) { var t = find(ev.tiers, items[i].tierId); if (!t) return { error: 'Ce billet n\'existe plus.' }; var rem = Math.max(0, t.stock - t.sold - (m[t.id] || 0)); if (items[i].qty > rem) { commit(); return { error: rem ? 'Il ne reste que ' + rem + ' billet' + (rem > 1 ? 's' : '') + ' pour « ' + t.name + ' ».' : '« ' + t.name + ' » est épuisé.' }; } }
+    var h = { id: uid('h'), evId: p.evId, dateIdx: p.dateIdx || 0, items: items.map(function (x) { return { tierId: x.tierId, qty: x.qty }; }), expires: Date.now() + HOLD_MS, device: db.device };
+    db.holds.push(h); commit(); return { hold: h };
+  }
+  function release(id) { var db = load(), n = (db.holds || []).length; db.holds = (db.holds || []).filter(function (h) { return h.id !== id; }); if (db.holds.length !== n) commit(); }
+  function holdLeft(id) { var db = load(), h = find(db.holds || [], id); return h ? Math.max(0, h.expires - Date.now()) : 0; }
+
+  /* Émet une commande et ses tickets. items : [{tierId, qty}] */
+  function issue(p) {
+    var db = load(), ev = find(db.events, p.evId);
+    if (!ev) return { error: 'Événement introuvable.' };
+    var channel = p.channel || 'app';
+    if (ev.status !== 'published' && channel === 'app') return { error: "Cet événement n'est pas ouvert à la vente." };
+    var items = (p.items || []).filter(function (i) { return i.qty > 0; });
+    if (!items.length) return { error: 'Choisissez au moins un billet.' };
+    if (p.holdId) { db.holds = (db.holds || []).filter(function (h) { return h.id !== p.holdId; }); }
+    var buyer = { name: String((p.buyer && p.buyer.name) || '').trim(), phone: String((p.buyer && p.buyer.phone) || '').trim(), email: String((p.buyer && p.buyer.email) || '').trim() };
+    if (buyer.name.length < 2) return { error: 'Entrez le nom complet.' };
+    if (channel === 'app' && !/^\d{8,10}$/.test(digits(buyer.phone))) return { error: 'Entrez un numéro de téléphone de 8 à 10 chiffres.' };
+    if (buyer.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyer.email)) return { error: "L'adresse e-mail n'est pas valide." };
+    var dateIdx = Math.min(Math.max(+p.dateIdx || 0, 0), Math.max(ev.dates.length - 1, 0));
+    for (var i = 0; i < items.length; i++) {
+      var tier = find(ev.tiers, items[i].tierId);
+      if (!tier) return { error: 'Ce type de billet n\'existe plus.' };
+      var rem = remaining(tier);
+      if (items[i].qty > rem) return { error: rem ? 'Il ne reste que ' + rem + ' billet' + (rem > 1 ? 's' : '') + ' pour « ' + tier.name + ' ».' : '« ' + tier.name + ' » est épuisé.' };
+      if (items[i].qty > 20) return { error: 'Vingt billets au maximum par commande.' };
+    }
+    var set = codeSet(db); db.orders.forEach(function (o) { set['R' + o.ref.slice(4)] = 1; });
+    var res = buildOrder(db, ev, dateIdx, items, buyer, channel, Date.now(), set);
+    var cpn = null;
+    if (p.coupon && channel === 'app') {
+      var cc = checkCoupon(p.coupon, ev.id, res.order.total);
+      if (cc.error) { return cc; }
+      cpn = cc.coupon; res.order.discount = cc.discount; res.order.coupon = cpn.code; res.order.total = Math.max(0, res.order.total - cc.discount); cpn.used = (cpn.used || 0) + 1;
+    }
+    res.order.payment = channel === 'app' ? (p.payment || { method: 'demo' }) : { method: 'cash' };
+    db.orders.unshift(res.order);
+    var nb = res.tickets.length;
+    if (channel === 'app') {
+      addNotif(db, db.device, 'Commande ' + res.order.ref + ' confirmée : ' + nb + ' billet' + (nb > 1 ? 's' : '') + ' pour ' + ev.title + '.');
+      if (ev.device && ev.device !== db.device) addNotif(db, ev.device, 'Nouvelle vente : ' + nb + ' billet' + (nb > 1 ? 's' : '') + ' pour ' + ev.title + '.');
+      else if (ev.device) addNotif(db, ev.device, 'Nouvelle vente sur votre événement ' + ev.title + ' (' + fmtN(res.order.total) + ' F CFA).');
+    }
+    res.tickets.forEach(function (t) { db.tickets.push(t); });
+    commit();
+    return { order: res.order, tickets: res.tickets };
+  }
+  function ticketsOf(orderId) { return load().tickets.filter(function (t) { return t.orderId === orderId; }); }
+  function cancelOrder(orderId) {
+    var db = load(), o = find(db.orders, orderId);
+    if (!o) return { error: 'Commande introuvable.' };
+    if (o.status === 'cancelled') return { error: 'Cette commande est déjà annulée.' };
+    var ts = ticketsOf(orderId);
+    if (ts.some(function (t) { return t.status === 'used'; })) return { error: "Impossible d'annuler : des billets ont déjà servi à l'entrée." };
+    var ev = find(db.events, o.evId);
+    ts.forEach(function (t) { if (t.status === 'transferred' || t.status === 'exchanged') return; t.status = 'cancelled'; var tier = ev && find(ev.tiers, t.tierId); if (tier) tier.sold = Math.max(0, tier.sold - 1); });
+    o.status = 'cancelled'; commit(); return { ok: true };
+  }
+  function lookup(code) {
+    var c = normCode(code); if (!c) return null;
+    return find(load().tickets, c, 'code');
+  }
+  /* Contrôle à l'entrée : valide le billet une seule fois. */
+  function checkIn(code, opts) {
+    opts = opts || {};
+    var c = normCode(code);
+    if (!c) return { status: 'invalid', message: 'Code illisible. Un code ressemble à TO-ABCD-EFGH.' };
+    var db = load(), t = find(db.tickets, c, 'code');
+    if (!t) return { status: 'unknown', code: c, message: 'Ce billet n\'existe pas.' };
+    var ev = find(db.events, t.evId), order = find(db.orders, t.orderId);
+    var base = { code: c, ticket: t, event: ev, order: order };
+    if (opts.evId && t.evId !== opts.evId) return Object.assign(base, { status: 'wrongevent', message: 'Ce billet est pour un autre événement : ' + (ev ? ev.title : '') + '.' });
+    if (t.status === 'cancelled') return Object.assign(base, { status: 'cancelled', message: 'Billet annulé.' });
+    if (t.status === 'transferred') return Object.assign(base, { status: 'replaced', message: 'Ce billet a été transféré à ' + (t.transferName || 'quelqu\'un') + '. Il faut présenter le nouveau billet.' });
+    if (t.status === 'exchanged') return Object.assign(base, { status: 'replaced', message: 'Ce billet a été échangé contre un autre. Il faut présenter le nouveau billet.' });
+    if (t.status === 'used') return Object.assign(base, { status: 'used', message: 'Déjà utilisé le ' + dateTimeLabel(t.usedAt) + '.' });
+    if (opts.dryRun) return Object.assign(base, { status: 'valid', message: 'Billet valide.' });
+    t.status = 'used'; t.usedAt = Date.now(); commit();
+    return Object.assign(base, { status: 'ok', message: 'Entrée autorisée.' });
+  }
+  function setTicketStatus(code, status) {
+    var db = load(), t = find(db.tickets, code, 'code'); if (!t) return { error: 'Billet introuvable.' };
+    var ev = find(db.events, t.evId), tier = ev && find(ev.tiers, t.tierId);
+    if (status === 'cancelled' && t.status !== 'cancelled') { if (tier) tier.sold = Math.max(0, tier.sold - 1); }
+    if (t.status === 'cancelled' && status !== 'cancelled') { if (tier) { if (remaining(tier) < 1) return { error: 'Plus de place disponible pour ce type de billet.' }; tier.sold++; } }
+    t.status = status; t.usedAt = status === 'used' ? Date.now() : null;
+    var o = find(db.orders, t.orderId);
+    if (o) { var all = db.tickets.filter(function (x) { return x.orderId === o.id; }); o.status = all.every(function (x) { return x.status === 'cancelled'; }) ? 'cancelled' : 'confirmed'; }
+    commit(); return { ok: true };
+  }
+  function upsertEvent(ev) {
+    var db = load(), cur = find(db.events, ev.id);
+    ev.tiers.forEach(function (t) { if (!t.id) t.id = uid('t'); t.price = Math.max(0, +t.price || 0); t.stock = Math.max(0, Math.floor(+t.stock || 0)); var old = cur && find(cur.tiers, t.id); t.sold = old ? old.sold : (t.sold || 0); if (t.stock < t.sold) t.stock = t.sold; });
+    if (cur) { Object.keys(ev).forEach(function (k) { cur[k] = ev[k]; }); } else { if (!ev.id) ev.id = uid('e'); ev.created = Date.now(); db.events.unshift(ev); }
+    commit(); return cur || ev;
+  }
+  function deleteEvent(id) {
+    var db = load(), ev = find(db.events, id); if (!ev) return { error: 'Événement introuvable.' };
+    var active = db.orders.some(function (o) { return o.evId === id && o.status !== 'cancelled'; });
+    if (active) return { error: 'Cet événement a des commandes. Annulez-les d\'abord ou passez l\'événement en brouillon.' };
+    db.events = db.events.filter(function (e) { return e.id !== id; });
+    db.orders = db.orders.filter(function (o) { return o.evId !== id; });
+    db.tickets = db.tickets.filter(function (t) { return t.evId !== id; });
+    commit(); return { ok: true };
+  }
+  function addCollect(c) { var db = load(); c.id = uid('c'); db.collects.unshift(c); commit(); return c; }
+  function toggleFav(id) { var db = load(); db.fav[id] = !db.fav[id]; commit(); return db.fav[id]; }
+  function setBuyer(b) { var db = load(); db.buyer = { name: b.name || '', phone: b.phone || '', email: b.email || '' }; commit(); }
+  function setSettings(patch) { var db = load(); Object.keys(patch).forEach(function (k) { db.settings[k] = patch[k]; }); commit(); }
+  function ordersOfDevice() { var db = load(); return db.orders.filter(function (o) { return o.device === db.device; }); }
+
+  /* ---------- transfert et échange de billets ---------- */
+  function transferTicket(code, to) {
+    var db = load(), t = find(db.tickets, code, 'code'); if (!t) return { error: 'Billet introuvable.' };
+    if (t.status !== 'valid') return { error: 'Seul un billet valide peut être transféré.' };
+    var ev = find(db.events, t.evId); if (isPast(ev, t.dateIdx)) return { error: 'Cet événement est déjà passé.' };
+    var name = String((to && to.name) || '').trim(), phone = String((to && to.phone) || '').trim();
+    if (name.length < 2) return { error: 'Entrez le nom de la personne.' };
+    if (!/^\d{8,10}$/.test(digits(phone))) return { error: 'Entrez un numéro de téléphone de 8 à 10 chiffres.' };
+    var nt = { code: genCode(codeSet(db)), orderId: t.orderId, evId: t.evId, dateIdx: t.dateIdx, tierId: t.tierId, tierName: t.tierName, holder: name, holderPhone: phone, status: 'valid', usedAt: null, createdAt: Date.now(), from: t.code };
+    t.status = 'transferred'; t.transferredTo = nt.code; t.transferName = name; db.tickets.push(nt);
+    addNotif(db, db.device, 'Billet transféré à ' + name + ' (' + t.tierName + ', ' + (ev ? ev.title : '') + ').');
+    commit(); return { ticket: nt, old: t };
+  }
+  function exchangeTicket(code, newTierId, payment) {
+    var db = load(), t = find(db.tickets, code, 'code'); if (!t) return { error: 'Billet introuvable.' };
+    if (t.status !== 'valid') return { error: 'Seul un billet valide peut être échangé.' };
+    var ev = find(db.events, t.evId); if (!ev || isPast(ev, t.dateIdx)) return { error: 'Cet événement est déjà passé.' };
+    var oldT = find(ev.tiers, t.tierId), nw = find(ev.tiers, newTierId), o = find(db.orders, t.orderId);
+    if (!nw || !oldT) return { error: 'Ce type de billet n\'existe plus.' }; if (nw.id === oldT.id) return { error: 'Choisissez un autre type de billet.' };
+    if (nw.price < oldT.price) return { error: 'L\'échange vers un billet moins cher n\'est pas remboursé. Choisissez un billet de même prix ou plus cher.' };
+    if (remaining(nw) < 1) return { error: '« ' + nw.name + ' » est épuisé.' };
+    var diff = nw.price - oldT.price;
+    var nt = { code: genCode(codeSet(db)), orderId: t.orderId, evId: t.evId, dateIdx: t.dateIdx, tierId: nw.id, tierName: nw.name, holder: t.holder, status: 'valid', usedAt: null, createdAt: Date.now(), from: t.code };
+    t.status = 'exchanged'; t.exchangedTo = nt.code; oldT.sold = Math.max(0, oldT.sold - 1); nw.sold = (nw.sold || 0) + 1; db.tickets.push(nt);
+    if (o) { var ol = find(o.lines, oldT.id, 'tierId'); if (ol) { ol.qty--; if (ol.qty <= 0) o.lines = o.lines.filter(function (l) { return l !== ol; }); } var nl = find(o.lines, nw.id, 'tierId'); if (nl) nl.qty++; else o.lines.push({ tierId: nw.id, name: nw.name, price: nw.price, qty: 1 }); o.total += diff; if (diff && payment) o.payment = payment; }
+    addNotif(db, db.device, 'Billet échangé : ' + oldT.name + ' contre ' + nw.name + (diff ? ' (+' + fmtN(diff) + ' F CFA)' : '') + '.');
+    commit(); return { ticket: nt, diff: diff };
+  }
+  function claimOrders(q) {
+    var db = load(), s = String(q || '').trim().toUpperCase(), d = digits(q), n = 0;
+    if (!s) return { error: 'Entrez une référence de commande ou un numéro de téléphone.' };
+    db.orders.forEach(function (o) {
+      if (o.channel !== 'app' && o.channel !== 'guichet') return;
+      var byRef = o.ref.toUpperCase() === s || o.ref.toUpperCase().replace('CMD-', '') === s.replace('CMD-', '');
+      var byPhone = d.length >= 8 && digits(o.buyer.phone).slice(-8) === d.slice(-8);
+      if ((byRef || byPhone) && o.device !== db.device) { o.device = db.device; n++; }
+    });
+    if (!n) return { error: 'Aucune commande trouvée avec cette information.' };
+    commit(); return { count: n };
+  }
+
+  /* ---------- contributions (cotisations) ---------- */
+  function contribute(p) {
+    var db = load(), c = find(db.collects, p.collId); if (!c) return { error: 'Cotisation introuvable.' };
+    var amount = Math.floor(+p.amount || 0); if (amount < 500) return { error: 'La contribution minimale est de 500 F CFA.' };
+    var k = { id: uid('k'), collId: c.id, device: db.device, amount: amount, name: String(p.name || '').trim() || 'Anonyme', anonymous: !!p.anonymous, payment: p.payment || { method: 'demo' }, createdAt: Date.now(), ref: 'CTB-' + genRef({}) };
+    db.contribs.unshift(k); c.raised = (c.raised || 0) + amount; c.donors = (c.donors || 0) + 1;
+    addNotif(db, db.device, 'Merci ! Votre contribution de ' + fmtN(amount) + ' F CFA pour « ' + c.title + ' » est confirmée.');
+    if (c.device && c.device !== db.device) addNotif(db, c.device, 'Nouvelle contribution de ' + fmtN(amount) + ' F CFA pour « ' + c.title + ' ».');
+    commit(); return { contrib: k, collect: c };
+  }
+  function contribsOfDevice() { var db = load(); return db.contribs.filter(function (k) { return k.device === db.device; }); }
+
+  /* ---------- portefeuille de l'organisateur ---------- */
+  function walletOf(device) {
+    var db = load(), com = (db.settings.commission || 0) / 100, td = today(), tx = [], pend = 0, avail = 0;
+    db.orders.forEach(function (o) {
+      if (o.status === 'cancelled' || o.channel !== 'app') return;
+      var ev = find(db.events, o.evId); if (!ev || !ev.device || ev.device !== device) return;
+      var net = Math.round(o.total * (1 - com)), last = ev.dates[ev.dates.length - 1].iso, rel = last < td;
+      tx.push({ kind: 'sale', ts: o.createdAt, label: 'Vente ' + o.ref + ' · ' + ev.title, amount: net, gross: o.total, status: rel ? 'available' : 'pending' }); if (rel) avail += net; else pend += net;
+    });
+    db.contribs.forEach(function (k) {
+      var c = find(db.collects, k.collId); if (!c || !c.device || c.device !== device) return;
+      var net = Math.round(k.amount * (1 - com)); tx.push({ kind: 'contrib', ts: k.createdAt, label: 'Contribution · ' + c.title, amount: net, gross: k.amount, status: 'available' }); avail += net;
+    });
+    db.payouts.forEach(function (p) {
+      if (p.device !== device) return;
+      if (p.status !== 'rejected') avail -= p.amount;
+      tx.push({ kind: 'payout', ts: p.createdAt, label: 'Retrait · ' + p.methodName + ' ' + p.phone, amount: -p.amount, status: p.status === 'paid' ? 'paid' : p.status === 'rejected' ? 'rejected' : 'processing' });
+    });
+    tx.sort(function (a, b) { return b.ts - a.ts; });
+    return { available: Math.max(0, avail), pending: pend, total: Math.max(0, avail) + pend, tx: tx };
+  }
+  function requestPayout(p) {
+    var db = load(), w = walletOf(db.device), amount = Math.floor(+p.amount || 0), min = db.settings.minPayout || 1000;
+    if (amount < min) return { error: 'Le retrait minimum est de ' + fmtN(min) + ' F CFA.' };
+    if (amount > w.available) return { error: 'Le montant dépasse votre solde disponible (' + fmtN(w.available) + ' F CFA).' };
+    if (!/^\d{8,10}$/.test(digits(p.phone))) return { error: 'Entrez un numéro de téléphone de 8 à 10 chiffres.' };
+    var po = { id: uid('w'), device: db.device, amount: amount, method: p.method, methodName: p.methodName || p.method, phone: String(p.phone).trim(), status: 'pending', createdAt: Date.now() };
+    db.payouts.unshift(po); addNotif(db, db.device, 'Demande de retrait de ' + fmtN(amount) + ' F CFA enregistrée. Traitement sous 24 h.');
+    commit(); return { payout: po };
+  }
+  function setPayoutStatus(id, status) {
+    var db = load(), p = find(db.payouts, id); if (!p) return { error: 'Retrait introuvable.' };
+    p.status = status; addNotif(db, p.device, status === 'paid' ? 'Votre retrait de ' + fmtN(p.amount) + ' F CFA a été envoyé sur ' + p.phone + '.' : status === 'rejected' ? 'Votre retrait de ' + fmtN(p.amount) + ' F CFA a été refusé. Le montant est de nouveau disponible.' : 'Votre retrait est en cours de traitement.');
+    commit(); return { ok: true };
+  }
+
+  /* ---------- coupons, messages, avis, points de vente ---------- */
+  function upsertCoupon(c) {
+    var db = load(); c.code = String(c.code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (c.code.length < 3) return { error: 'Le code doit avoir au moins 3 lettres ou chiffres.' };
+    c.value = Math.floor(+c.value || 0); if (c.value < 1 || (c.type === 'pct' && c.value > 100)) return { error: c.type === 'pct' ? 'Le pourcentage doit être entre 1 et 100.' : 'Le montant doit être positif.' };
+    var cur = find(db.coupons, c.code, 'code'); if (cur) { Object.keys(c).forEach(function (k) { if (k !== 'used') cur[k] = c[k]; }); } else { c.used = 0; db.coupons.unshift(c); }
+    commit(); return { ok: true };
+  }
+  function deleteCoupon(code) { var db = load(); db.coupons = db.coupons.filter(function (c) { return c.code !== code; }); commit(); }
+  function sendMessage(m) {
+    var text = String((m && m.text) || '').trim(); if (text.length < 5) return { error: 'Écrivez votre message (5 caractères au minimum).' };
+    var db = load(); db.messages.unshift({ id: uid('m'), name: String(m.name || '').trim(), contact: String(m.contact || '').trim(), text: text, ts: Date.now(), done: false }); commit(); return { ok: true };
+  }
+  function addReview(r) { var db = load(); if (!(r.stars >= 1 && r.stars <= 5)) return { error: 'Choisissez une note.' }; db.reviews.unshift({ id: uid('r'), stars: r.stars, text: String(r.text || '').trim(), ts: Date.now() }); commit(); return { ok: true }; }
+  function upsertPoint(p) { var db = load(); if (!String(p.name || '').trim()) return { error: 'Donnez un nom au point de vente.' }; var cur = p.id && find(db.points, p.id); if (cur) Object.keys(p).forEach(function (k) { cur[k] = p[k]; }); else { p.id = uid('p'); db.points.unshift(p); } commit(); return { ok: true }; }
+  function deletePoint(id) { var db = load(); db.points = db.points.filter(function (p) { return p.id !== id; }); commit(); }
+
+  /* ---------- statistiques pour l'admin ---------- */
+  function stats(days) {
+    days = days || 14;
+    var db = load(), today = parseIso(isoOf(Date.now())).getTime(), s = { issued: 0, used: 0, revenue: 0, orders: 0, cancelled: 0, byDay: [], byEvent: [], byTier: {} }, i;
+    for (i = days - 1; i >= 0; i--) { var d = new Date(today - i * DAY_MS); s.byDay.push({ iso: isoOf(d), label: d.getDate() + ' ' + MONTHS[d.getMonth()], w: DAYS[d.getDay()], count: 0, revenue: 0 }); }
+    var dayIdx = {}; s.byDay.forEach(function (x, k) { dayIdx[x.iso] = k; });
+    var priceOf = {}; db.events.forEach(function (e) { e.tiers.forEach(function (t) { priceOf[t.id] = t.price; }); });
+    var perEvent = {}; db.events.forEach(function (e) { perEvent[e.id] = { id: e.id, title: e.title, sold: 0, stock: 0, revenue: 0, used: 0, status: e.status }; e.tiers.forEach(function (t) { perEvent[e.id].stock += t.stock; }); });
+    db.orders.forEach(function (o) { if (o.status === 'cancelled') { s.cancelled++; return; } s.orders++; s.revenue += o.total; if (perEvent[o.evId]) perEvent[o.evId].revenue += o.total; });
+    db.tickets.forEach(function (t) {
+      if (t.status === 'cancelled' || t.status === 'transferred' || t.status === 'exchanged') return;
+      s.issued++; if (t.status === 'used') s.used++;
+      var pe = perEvent[t.evId]; if (pe) { pe.sold++; if (t.status === 'used') pe.used++; }
+      var k = dayIdx[isoOf(t.createdAt)]; if (k != null) { s.byDay[k].count++; s.byDay[k].revenue += (priceOf[t.tierId] || 0); }
+    });
+    s.byEvent = Object.keys(perEvent).map(function (k) { return perEvent[k]; });
+    return s;
+  }
+
+  function csv(rows) {
+    return '﻿' + rows.map(function (r) { return r.map(function (c) { c = String(c == null ? '' : c); return /[;"\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';'); }).join('\r\n');
+  }
+  function download(name, text, type) {
+    try {
+      var b = new Blob([text], { type: type || 'text/csv;charset=utf-8' }), a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); return true;
+    } catch (e) { return false; }
+  }
+  function pref(k, v) { try { if (v === undefined) return localStorage.getItem('to_pref_' + k); localStorage.setItem('to_pref_' + k, v); } catch (e) { } return null; }
+
+  /* ---------- données de démonstration (dates relatives à aujourd'hui) ---------- */
+  var FIRST = ['Awa', 'Moussa', 'Fatou', 'Ibrahim', 'Aminata', 'Salif', 'Mariam', 'Boureima', 'Aïcha', 'Issouf', 'Kadidja', 'Harouna', 'Salimata', 'Adama', 'Rasmata', 'Yacouba', 'Nafissatou', 'Seydou', 'Brigitte', 'Eric', 'Estelle', 'Koffi', 'Aya', 'Kouassi'];
+  var LAST = ['Ouédraogo', 'Sawadogo', 'Traoré', 'Kaboré', 'Zongo', 'Compaoré', 'Sankara', 'Ilboudo', 'Coulibaly', 'Konaté', 'Diallo', 'Koné', 'Yao', 'Bamba', 'Touré', 'Nikiéma'];
+  function seed() {
+    var rnd = mulberry(20261017), now = Date.now(), today = parseIso(isoOf(now)).getTime();
+    function dt(off, time) { return { iso: isoOf(today + off * DAY_MS), time: time }; }
+    function T(name, price, stock, sold, desc) { return { id: uid('t'), name: name, price: price, stock: stock, sold: 0, target: sold, desc: desc }; }
+    var db = {
+      v: 3, device: uid('d'), fav: {}, holds: [], coupons: seedCoupons(), payouts: [], contribs: [], notifs: [], messages: [], reviews: [], points: seedPoints(), buyer: { name: 'Koba Lad', phone: '', email: 'lkoba841@gmail.com' }, settings: { pin: '1234', org: 'Ticket Option', commission: 5, minPayout: 1000 },
+      events: [
+        { id: 'e1', title: 'Nuit Afro Live', cat: 'Concert', cc: 'BF', city: 'Ouagadougou', venue: 'Palais des Sports de Ouaga 2000', org: 'Savane Productions', likes: 2700, status: 'published', pal: ['#2a0b12', '#c4172c', '#ff8a3d'], dates: [dt(26, '20:00'), dt(27, '18:00')], desc: "Deux soirées avec une scène panafricaine, un orchestre live et des invités surprise. Ouverture des portes deux heures avant le début. Pièce d'identité demandée à l'entrée.", tiers: [T('Grand public', 3000, 300, 300, 'Accès gradins arrière.'), T('Pelouse', 5000, 400, 352, 'Accès debout, zone pelouse.'), T('Tribune latérale', 10000, 200, 146, 'Place assise numérotée côté latéral.'), T('VIP', 25000, 60, 21, 'Place assise, accès bar réservé, entrée dédiée.')] },
+        { id: 'e2', title: 'Festival des Masques', cat: 'Festival', cc: 'BF', city: 'Bobo-Dioulasso', venue: 'Place de la Nation', org: 'Association Culture Vive', likes: 1240, status: 'published', pal: ['#0f2a24', '#12805f', '#f4c542'], dates: [dt(31, '16:00'), dt(32, '16:00'), dt(33, '14:00')], desc: "Trois jours de danses, de masques traditionnels et de musique. Restauration locale sur place, espace enfants et marché d'artisans.", tiers: [T('Entrée assise', 2000, 500, 180, 'Accès à toutes les zones, hors carré or.'), T('Pass 3 jours', 5000, 300, 196, 'Accès aux trois journées.'), T('Carré or', 15000, 80, 71, 'Places assises proches de la scène.')] },
+        { id: 'e3', title: 'Conférence Jeunes Entrepreneurs', cat: 'Conférence', cc: 'BF', city: 'Ouagadougou', venue: 'Hôtel Silmandé, salle Kaya', org: 'Réseau Initiative Faso', likes: 430, status: 'published', pal: ['#10172e', '#2447b8', '#9bb8ff'], dates: [dt(52, '08:30')], desc: "Une journée de panels, d'ateliers et de rencontres avec des fondateurs de la sous-région. Déjeuner et certificat de participation inclus.", tiers: [T('Étudiant', 3000, 200, 64, 'Sur présentation de la carte étudiante.'), T('Standard', 10000, 250, 118, 'Accès conférences, déjeuner inclus.'), T('Premium', 25000, 60, 54, 'Accès ateliers fermés et dîner de réseautage.')] },
+        { id: 'e4', title: 'Abidjan Beach Party', cat: 'Soirée', cc: 'CI', city: 'Abidjan', venue: 'Plage de Grand-Bassam', org: 'Lagune Events', likes: 3100, status: 'published', pal: ['#2d0a2b', '#d11a7c', '#ffb347'], dates: [dt(70, '15:00')], desc: "Une après-midi et une soirée sur la plage avec trois DJ, une scène flottante et des animations. Navette depuis Abidjan en option.", tiers: [T('Entrée simple', 5000, 400, 353, 'Accès plage et scène principale.'), T('Entrée + navette', 8000, 300, 181, 'Aller-retour depuis Cocody.'), T('Carré VIP', 30000, 40, 12, 'Table de 4 personnes, service bouteille.')] },
+        { id: 'e5', title: 'Tournoi inter-quartiers', cat: 'Sport', cc: 'CI', city: 'Yamoussoukro', venue: 'Stade Municipal', org: 'Ligue Amateur CI', likes: 560, status: 'published', pal: ['#0d2b12', '#2ea043', '#f2e94e'], dates: [dt(77, '15:00')], desc: 'Finale du tournoi inter-quartiers avec animations et remise des trophées.', tiers: [T('Pelouse', 1000, 500, 90, 'Accès debout.'), T('Tribune', 3000, 200, 37, 'Place assise.')] }
+      ],
+      orders: [], tickets: [],
+      collects: [
+        { id: 'c1', title: 'Soutenir la clinique du village de Koupéla', cat: 'Solidarité', cc: 'BF', raised: 1850000, goal: 3000000, donors: 142, pal: ['#2e1a0f', '#c46a17'] },
+        { id: 'c2', title: "Anniversaire surprise de Maman Awa", cat: 'Anniversaire', cc: 'BF', raised: 215000, goal: 300000, donors: 38, pal: ['#2a0b2b', '#a1209e'] },
+        { id: 'c3', title: 'Rénovation de la salle de classe CM2', cat: 'Éducation', cc: 'CI', raised: 640000, goal: 1500000, donors: 67, pal: ['#0f2236', '#1e7fc4'] }
+      ]
+    };
+    var set = {};
+    function pick(a) { return a[Math.floor(rnd() * a.length)]; }
+    db.events.forEach(function (ev) {
+      ev.tiers.forEach(function (tier) {
+        var left = tier.target; delete tier.target;
+        while (left > 0) {
+          var q = Math.min(left, 1 + Math.floor(rnd() * rnd() * 5)), day = Math.floor(Math.pow(rnd(), 1.7) * 30);
+          var ts = now - day * DAY_MS - Math.floor(rnd() * 20 * 3600000) - 600000;
+          var buyer = { name: pick(FIRST) + ' ' + pick(LAST), phone: (rnd() < 0.7 ? '7' + Math.floor(rnd() * 10) : '0' + (5 + Math.floor(rnd() * 3))) + String(Math.floor(10000000 + rnd() * 89999999)).slice(0, 6), email: '' };
+          var res = buildOrder(db, ev, Math.floor(rnd() * ev.dates.length), [{ tierId: tier.id, qty: q }], buyer, rnd() < 0.8 ? 'app' : 'guichet', ts, set);
+          res.order.device = null;
+          db.orders.push(res.order); res.tickets.forEach(function (t) { db.tickets.push(t); });
+          left -= q;
+        }
+      });
+    });
+    db.orders.sort(function (a, b) { return b.createdAt - a.createdAt; });
+    /* quelques commandes annulées pour la démo */
+    for (var k = 0, c = 0; k < db.orders.length && c < 4; k += 37) {
+      var o = db.orders[k], evx = find(db.events, o.evId);
+      o.status = 'cancelled'; db.tickets.forEach(function (t) { if (t.orderId === o.id) { t.status = 'cancelled'; var tr = find(evx.tiers, t.tierId); tr.sold = Math.max(0, tr.sold - 1); } }); c++;
+    }
+    return db;
+  }
+  function reset() { mem = seed(); commit(); return mem; }
+
+  g.TO = {
+    db: load, on: function (f) { subs.push(f); }, commit: commit, reset: reset,
+    esc: esc, fmt: fmt, uid: uid, find: find, isoOf: isoOf, dateParts: dateParts, dateTimeLabel: dateTimeLabel, pref: pref, digits: digits,
+    remaining: remaining, tierStatus: tierStatus, eventState: eventState, minPrice: minPrice,
+    issue: issue, ticketsOf: ticketsOf, cancelOrder: cancelOrder, lookup: lookup, checkIn: checkIn, setTicketStatus: setTicketStatus, normCode: normCode,
+    upsertEvent: upsertEvent, deleteEvent: deleteEvent, addCollect: addCollect, toggleFav: toggleFav, setBuyer: setBuyer, setSettings: setSettings, ordersOfDevice: ordersOfDevice,
+    hold: hold, release: release, holdLeft: holdLeft, checkCoupon: checkCoupon, isPast: isPast, today: today,
+    notifsOf: notifsOf, markNotifsRead: markNotifsRead, transferTicket: transferTicket, exchangeTicket: exchangeTicket, claimOrders: claimOrders,
+    contribute: contribute, contribsOfDevice: contribsOfDevice, walletOf: walletOf, requestPayout: requestPayout, setPayoutStatus: setPayoutStatus,
+    upsertCoupon: upsertCoupon, deleteCoupon: deleteCoupon, sendMessage: sendMessage, addReview: addReview, upsertPoint: upsertPoint, deletePoint: deletePoint,
+    stats: stats, csv: csv, download: download,
+    qr: function (text, label) { try { return g.QR ? g.QR.svg(text, label || 'QR code ' + text) : ''; } catch (e) { return ''; } }
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = g.TO;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Comptes Ticket Option : inscription une seule fois, reconnexion par téléphone + code secret.
+   MODE EN LIGNE : renseignez CLOUD.url et CLOUD.key (projet Supabase, voir LISEZMOI.txt).
+   Sans ces deux valeurs, les comptes restent sur cet appareil. */
+(function (g) {
+  var CLOUD = { url: 'https://fgluvksthsbnyuitqpcb.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbHV2a3N0aHNibnl1aXRxcGNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5MjUxMjgsImV4cCI6MjEwODUwMTEyOH0.mI-3dMh4eKXdtpGmAOpVhfkA6rA1GFwpCrgFdN2Zh5Y' };
+  var TABLE = 'profiles', LS = 'to_accounts', SS = 'to_session';
+  function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
+  function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+  function norm(p) { var d = String(p || '').replace(/\D/g, ''); return d.slice(-8); }
+  function rnd() { var a = new Uint8Array(12); (g.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach(function (_, i) { a[i] = Math.random() * 256; }); return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
+  function hash(pin, salt) {
+    var s = salt + ':' + pin;
+    if (g.crypto && crypto.subtle && g.TextEncoder) return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); });
+    var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return Promise.resolve('w' + (h >>> 0).toString(16));
+  }
+  function online() { return !!(CLOUD.url && CLOUD.key); }
+  function api(method, path, body) {
+    return fetch(CLOUD.url.replace(/\/$/, '') + '/rest/v1/' + path, { method: method, headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + CLOUD.key, 'Content-Type': 'application/json', Prefer: 'return=representation' }, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { return r.text().then(function (t) { var j; try { j = t ? JSON.parse(t) : null; } catch (e) { j = null; } if (!r.ok) { var err = new Error((j && j.message) || 'Erreur réseau'); err.status = r.status; err.code = j && j.code; throw err; } return j; }); });
+  }
+  function netErr(e) { return { error: (e && e.status === 409) || (e && e.code === '23505') ? 'Ce numéro a déjà un compte. Utilisez « Se connecter ».' : (e && e.status) ? 'Le service est indisponible, réessayez.' : 'Pas de connexion internet. Réessayez.' }; }
+  function validate(f, signup) {
+    var phone = norm(f.phone);
+    if (signup && String(f.name || '').trim().length < 2) return 'Entrez votre nom complet.';
+    if (String(f.phone || '').replace(/\D/g, '').length < 8 || String(f.phone || '').replace(/\D/g, '').length > 10) return 'Entrez un numéro de téléphone de 8 à 10 chiffres.';
+    if (signup && f.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email)) return "L'adresse e-mail n'est pas valide.";
+    if (!/^\d{4,6}$/.test(f.pin || '')) return 'Le code secret doit avoir 4 à 6 chiffres.';
+    if (signup && f.pin !== f.pin2) return 'Les deux codes secrets ne sont pas identiques.';
+    return phone ? '' : 'Numéro invalide.';
+  }
+  function start(u) { var s = { phone: u.phone, name: u.name, email: u.email || '', at: Date.now() }; jset(SS, s); return { user: s }; }
+  var AUTH = {
+    online: online,
+    session: function () { var s = jget(SS, null); return s && s.phone ? s : null; },
+    logout: function () { try { localStorage.removeItem(SS); } catch (e) { } },
+    signup: function (f) {
+      var er = validate(f, true); if (er) return Promise.resolve({ error: er });
+      var phone = norm(f.phone), salt = rnd();
+      return hash(f.pin, salt).then(function (h) {
+        var row = { phone: phone, name: f.name.trim(), email: (f.email || '').trim(), salt: salt, pin_hash: h, created_at: new Date().toISOString() };
+        if (online()) return api('POST', 'rpc/ticket_signup', { p_phone: phone, p_name: row.name, p_email: row.email, p_salt: salt, p_pin_hash: h }).then(function () { return start(row); }, netErr);
+        var all = jget(LS, {}); if (all[phone]) return { error: 'Ce numéro a déjà un compte. Utilisez « Se connecter ».' };
+        all[phone] = row; jset(LS, all); return start(row);
+      });
+    },
+    login: function (f) {
+      var er = validate(f, false); if (er) return Promise.resolve({ error: er });
+      var phone = norm(f.phone), NOACC = "Aucun compte avec ce numéro. Inscrivez-vous d'abord.";
+      if (online()) {
+        return api('POST', 'rpc/ticket_salt', { p_phone: phone }).then(function (salt) {
+          if (!salt) return { error: NOACC };
+          return hash(f.pin, salt).then(function (h) {
+            return api('POST', 'rpc/ticket_login', { p_phone: phone, p_pin_hash: h }).then(function (r) {
+              if (r && r.ok) return start({ phone: phone, name: r.name, email: r.email });
+              if (r && r.locked) return { error: 'Trop d\'essais. Réessayez dans 15 minutes.' };
+              return { error: 'Code secret incorrect.' };
+            });
+          });
+        }).then(null, netErr);
+      }
+      var u = jget(LS, {})[phone];
+      if (!u) return Promise.resolve({ error: NOACC });
+      return hash(f.pin, u.salt).then(function (h) { return h === u.pin_hash ? start(u) : { error: 'Code secret incorrect.' }; });
+    }
+  };
+  g.AUTH = AUTH;
+})(window);
+
+</script>
+<script>
+(function(){
+"use strict";
+var P={
+ pin:'<path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+ chevd:'<path d="M6 9l6 6 6-6"/>',
+ chevr:'<path d="M9 6l6 6-6 6"/>',
+ back:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
+ wallet:'<path d="M4 7a2 2 0 0 1 2-2h11v3"/><path d="M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-1z"/><circle cx="16.5" cy="13.5" r="1.1"/>',
+ heart:'<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.2C19.5 15.4 12 20 12 20z"/>',
+ bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>',
+ search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+ ticket:'<path d="M4 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1a2 2 0 0 1 0-4v0a2 2 0 0 0 0-4V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1z"/><path d="M14 6v2M14 11v2M14 16v2"/>',
+ home:'<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
+ cal:'<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+ calplus:'<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M12 12.5v5M9.5 15h5"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ minus:'<path d="M5 12h14"/>',
+ user:'<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>',
+ users:'<circle cx="9" cy="9" r="3.2"/><path d="M3 19c.6-3.2 3-4.8 6-4.8s5.4 1.6 6 4.8"/><path d="M16 6.2a3.2 3.2 0 0 1 0 5.6M18.5 14.6c1.6.7 2.6 2.1 3 4.4"/>',
+ globe:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5S14.4 18.1 12 20.5M12 3.5C9.6 5.9 8.4 8.7 8.4 12s1.2 6.1 3.6 8.5"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 14.5l1.6 1.2-1.6 2.8-1.9-.6a7 7 0 0 1-1.6.9L15.5 21h-3.2l-.4-2.2a7 7 0 0 1-1.6-.9l-1.9.6-1.6-2.8 1.6-1.2a7 7 0 0 1 0-1.8L6.8 11.5l1.6-2.8 1.9.6a7 7 0 0 1 1.6-.9l.4-2.2h3.2l.4 2.2a7 7 0 0 1 1.6.9l1.9-.6 1.6 2.8-1.6 1.2a7 7 0 0 1 0 1.8z"/>',
+ shop:'<path d="M4 9l1.5-4.5h13L20 9"/><path d="M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9"/><path d="M5.5 12v7.5h13V12M10 19.5v-4h4v4"/>',
+ star:'<path d="M12 4l2.5 5.2 5.7.8-4.1 4 1 5.6L12 17l-5.1 2.6 1-5.6-4.1-4 5.7-.8z"/>',
+ headset:'<path d="M5 14v-2a7 7 0 0 1 14 0v2"/><rect x="3.5" y="13" width="4" height="6" rx="1.8"/><rect x="16.5" y="13" width="4" height="6" rx="1.8"/><path d="M18.5 19c0 1.6-2 2-5 2"/>',
+ edit:'<path d="M5 19l1-4L16.5 4.5a2 2 0 0 1 3 3L9 18z"/><path d="M5 21h14"/>',
+ share:'<circle cx="6" cy="12" r="2.4"/><circle cx="17.5" cy="6" r="2.4"/><circle cx="17.5" cy="18" r="2.4"/><path d="M8.2 10.8l7.1-3.6M8.2 13.2l7.1 3.6"/>',
+ upload:'<path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/>',
+ map:'<path d="M3.5 6.5l5.5-2 6 2 5.5-2v13l-5.5 2-6-2-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/>',
+ mappin:'<path d="M3.5 6.5l5.5-2 5 1.7M9 4.5v13l-5.5 2z"/><path d="M18 21s3.5-2.8 3.5-5.5a3.5 3.5 0 1 0-7 0C14.5 18.2 18 21 18 21z"/><circle cx="18" cy="15.4" r="1.2"/>',
+ xcircle:'<circle cx="12" cy="12" r="8.5"/><path d="M9 9l6 6M15 9l-6 6"/>',
+ warn:'<path d="M12 4l9 15.5H3z"/><path d="M12 10v4.5M12 17.2v.1"/>',
+ trend:'<path d="M3.5 17l6-6 4 4 7-8"/><path d="M15.5 7H21v5.5"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ verified:'<path d="M12 3l2.2 1.4 2.6-.1 1.1 2.4 2.1 1.5-.6 2.5.6 2.5-2.1 1.5-1.1 2.4-2.6-.1L12 21l-2.2-1.4-2.6.1-1.1-2.4L4 15.8l.6-2.5L4 10.8l2.1-1.5 1.1-2.4 2.6.1z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>',
+ tray:'<rect x="4" y="5" width="16" height="14" rx="3.5"/><path d="M4 13h4.5a3.5 3.5 0 0 0 7 0H20"/>',
+ download:'<path d="M12 4v10M7.5 10L12 14.5 16.5 10"/><path d="M5 17v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1"/>',
+ eye:'<path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/>',
+ coins:'<ellipse cx="10" cy="7" rx="6" ry="2.6"/><path d="M4 7v4c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6V7M4 11v4c0 1.4 2.7 2.6 6 2.6 1 0 2-.1 2.8-.4"/>',
+ bag:'<path d="M6 9h12l1 11H5z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>'
+};
+
+P.x = '<path d="M6 6l12 12M18 6L6 18"/>';
+P.copy = '<rect x="8.5" y="8.5" width="11" height="11.5" rx="2.2"/><path d="M5 15.5V6.5A2 2 0 0 1 7 4.5h8"/>';
+P.phone = '<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/>';
+P.out = '<path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5M10 8l-4 4 4 4M6 12h10"/>';
+P.card = '<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>';
+P.trash = '<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"/>';
+P.eyeoff = '<path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><path d="M4 4l16 16"/>';
+P.send = '<path d="M21 4L10 14M21 4l-6.5 17-3.5-7-7-3.5z"/>';
+P.swap = '<path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>';
+P.scan = '<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M4 12h16"/>';
+P.img = '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>';
+P.clock = '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>';
+P.cube = '<path d="M12 3l8 4.2v9.6L12 21l-8-4.2V7.2z"/><path d="M4 7.2l8 4.3 8-4.3M12 11.5V21"/>';
+P.chart = '<path d="M12 4a8 8 0 1 0 8 8h-8z"/><path d="M15 3.2A8 8 0 0 1 20.8 9H15z"/>';
+P.moon = '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>';
+function ic(n, cls) { return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (P[n] || '') + '</svg>'; }
+function solidHeart() { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="fill:var(--accent);stroke:var(--accent)">' + P.heart + '</svg>'; }
+
+var esc = TO.esc, fmt = TO.fmt;
+var COUNTRIES = { BF: { name: 'Burkina Faso' }, CI: { name: "Côte d'Ivoire" } };
+var flagSvg = {
+  BF: '<svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="1" fill="#ef2b2d"/><rect y="1" width="3" height="1" fill="#009e49"/><path d="M1.5 .55l.13.4h.42l-.34.25.13.4-.34-.25-.34.25.13-.4-.34-.25h.42z" fill="#fcd116"/></svg>',
+  CI: '<svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="1" height="2" fill="#f77f00"/><rect x="1" width="1" height="2" fill="#fff" stroke="#ddd" stroke-width=".02"/><rect x="2" width="1" height="2" fill="#009e60"/></svg>'
+};
+var PALS = [['#2a0b12', '#c4172c', '#ff8a3d'], ['#0f2a24', '#12805f', '#f4c542'], ['#10172e', '#2447b8', '#9bb8ff'], ['#2d0a2b', '#d11a7c', '#ffb347'], ['#0d2b12', '#2ea043', '#f2e94e']];
+
+/* Pays et moyens de paiement proposés. La passerelle réelle (CinetPay, PayDunya, etc.) se branche dans PAY.start. */
+var PAYC = {
+  CI: { name: "Côte d'Ivoire", dial: '+225', m: ['wave', 'orange', 'mtn', 'moov', 'card', 'djamo'] },
+  BF: { name: 'Burkina Faso', dial: '+226', m: ['orange', 'moov', 'wave', 'card'] },
+  SN: { name: 'Sénégal', dial: '+221', m: ['wave', 'orange', 'card'] },
+  ML: { name: 'Mali', dial: '+223', m: ['orange', 'moov', 'wave', 'card'] },
+  BJ: { name: 'Bénin', dial: '+229', m: ['mtn', 'moov', 'card'] }
+};
+var PAYM = {
+  wave: { name: 'Wave', abbr: 'W', bg: '#1dc8ff', fg: '#06222b', phone: true, hint: 'Une demande de paiement arrive dans votre application Wave.' },
+  orange: { name: 'Orange Money', abbr: 'OM', bg: '#ff7900', fg: '#fff', phone: true, hint: 'Validez le paiement avec votre code secret Orange Money.' },
+  mtn: { name: 'MTN Mobile Money', abbr: 'MTN', bg: '#ffcc00', fg: '#2b2300', phone: true, hint: 'Validez le paiement avec votre code secret MoMo.' },
+  moov: { name: 'Moov Money', abbr: 'MV', bg: '#0a6bb5', fg: '#fff', phone: true, hint: 'Validez le paiement avec votre code secret Moov Money.' },
+  card: { name: 'Carte bancaire', abbr: '', bg: '#eceaea', fg: '#1d1416', phone: false, hint: 'Vous serez redirigé vers la page sécurisée de votre banque.' },
+  djamo: { name: 'Djamo', abbr: 'dj', bg: '#1c1c24', fg: '#fff', phone: true, hint: 'Validez le paiement dans votre application Djamo.' }
+};
+/* Passerelle de paiement. Version démo : la confirmation est simulée à l'écran.
+   Pour de vrais paiements : appelez ici votre fournisseur (côté serveur) et résolvez la promesse quand il confirme. */
+var PAY = { demo: true, ref: function () { return 'PAY-' + Math.random().toString(36).slice(2, 8).toUpperCase(); } };
+
+var S = { country: TO.pref('country') === 'CI' ? 'CI' : 'BF', tab: 'home', stack: [], q: '', qty: {}, dateIdx: 0, detailTab: 'tickets', openOrder: null, deferred: null,
+  otab: 'tickets', osub: 'upcoming', ptab: 'events', psub: 'upcoming', pq: '', ftab: 'ev', coupon: {}, cpnOpen: false, hold: null, pay: null, hide: false, formImg: null, cd: null, camStop: null };
+var $v = document.getElementById('view'), $t = document.getElementById('tabbar'), $l = document.getElementById('layer');
+
+/* ---------- aides ---------- */
+function db() { return TO.db(); }
+function getEv(id) { return TO.find(db().events, id); }
+function getCo(id) { return TO.find(db().collects, id); }
+function pubEvents() { return db().events.filter(function (e) { return e.status === 'published'; }); }
+function myEvents() { var d = db(); return d.events.filter(function (e) { return e.device === d.device; }); }
+function myCollects() { var d = db(); return d.collects.filter(function (c) { return c.device === d.device; }); }
+function initials(n) { var p = String(n || '').trim().split(/\s+/); return ((p[0] || '?').charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase(); }
+function dateText(ev, i) { var d = TO.dateParts(ev.dates[i || 0] || ev.dates[0]); return d.short + ' · ' + d.t; }
+function toast(m) { [].forEach.call(document.querySelectorAll('.toast'), function (x) { x.remove(); }); var d = document.createElement('div'); d.className = 'toast'; d.setAttribute('role', 'status'); d.textContent = m; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
+function money(n) { return fmt(n) + ' F CFA'; }
+function cartTotal(ev) {
+  var n = 0, s = 0, items = [];
+  ev.tiers.forEach(function (t) { var q = Math.min(S.qty[ev.id + ':' + t.id] || 0, TO.remaining(t), 10); if (q > 0) { n += q; s += q * t.price; items.push({ tierId: t.id, qty: q, name: t.name, price: t.price }); } });
+  var cp = null, disc = 0, c = S.coupon[ev.id];
+  if (c && n) { var r = TO.checkCoupon(c.code, ev.id, s); if (r.ok) { cp = r.coupon; disc = r.discount; } else { delete S.coupon[ev.id]; } }
+  return { n: n, sub: s, disc: disc, coupon: cp, total: Math.max(0, s - disc), items: items };
+}
+function isStandalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function unread() { return TO.notifsOf().filter(function (n) { return !n.read; }).length; }
+function ago(ts) { var m = Math.round((Date.now() - ts) / 60000); if (m < 1) return 'À l\'instant'; if (m < 60) return 'Il y a ' + m + ' min'; var h = Math.round(m / 60); if (h < 24) return 'Il y a ' + h + ' h'; return TO.dateTimeLabel(ts); }
+function readImg(file, cb) {
+  var r = new FileReader();
+  r.onload = function () { var im = new Image(); im.onload = function () { var s = Math.min(1, 720 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); cb(c.toDataURL('image/jpeg', 0.72)); }; im.onerror = function () { cb(null); }; im.src = r.result; };
+  r.onerror = function () { cb(null); }; r.readAsDataURL(file);
+}
+
+/* ---------- composants ---------- */
+function poster(ev, opts) {
+  opts = opts || {}; var p = ev.pal || PALS[0];
+  if (ev.img) return '<div class="poster' + (opts.tall ? ' tall' : '') + '"><img src="' + ev.img + '" alt="' + esc(ev.title) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' + (opts.noTag ? '' : '<span class="tag">' + esc(ev.cat) + '</span>') + '</div>';
+  return '<div class="poster' + (opts.tall ? ' tall' : '') + '">' +
+    '<div class="bg" style="background:linear-gradient(160deg,' + p[0] + ' 0%,' + p[0] + ' 40%,' + p[1] + ' 140%)"></div>' +
+    '<div class="shape" style="width:62%;aspect-ratio:1;right:-14%;top:-8%;background:radial-gradient(circle at 35% 35%,' + p[2] + ',' + p[1] + ' 70%);opacity:.9"></div>' +
+    '<div class="shape" style="width:34%;aspect-ratio:1;left:-8%;top:34%;border:2px solid ' + p[2] + ';opacity:.5"></div>' +
+    (opts.noTag ? '' : '<span class="tag">' + esc(ev.cat) + '</span>') +
+    '<span class="verified">' + ic('verified') + '</span>' +
+    '<div class="big">' + esc(ev.title) + '</div></div>';
+}
+function thumb(ev) { return ev.img ? '<span class="thumb"><img src="' + ev.img + '" alt="" style="width:100%;height:100%;object-fit:cover"></span>' : '<span class="thumb" style="background:linear-gradient(160deg,' + ev.pal[0] + ',' + ev.pal[1] + ')"><span style="position:absolute;right:-12px;top:-12px;width:54px;height:54px;border-radius:50%;background:' + ev.pal[2] + ';opacity:.85"></span></span>'; }
+function eventCard(ev) {
+  var d = TO.dateParts(ev.dates[0]), fav = db().fav[ev.id], out = TO.eventState(ev) === 'out';
+  return '<article class="card"><button data-act="event" data-id="' + ev.id + '" style="display:block;width:100%;text-align:left" aria-label="' + esc(ev.title) + '">' + poster(ev) + '</button>' +
+    '<div class="body"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><h3>' + esc(ev.title) + '</h3>' +
+    '<button class="likes" data-act="fav" data-id="' + ev.id + '" aria-label="Ajouter aux favoris" aria-pressed="' + (!!fav) + '">' + (fav ? solidHeart() : ic('heart')) + '<span>' + (ev.likes + (fav ? 1 : 0) >= 1000 ? ((ev.likes + (fav ? 1 : 0)) / 1000).toFixed(1).replace('.', ',') + ' k' : ev.likes + (fav ? 1 : 0)) + '</span></button></div>' +
+    '<div class="meta">' + ic('ticket') + '<span>À partir de ' + fmt(TO.minPrice(ev)) + ' F CFA</span></div>' +
+    '<div class="meta">' + ic('pin') + '<span>' + esc(ev.city) + '</span><span style="flex:none">' + d.short + ' à ' + d.t + '</span></div>' +
+    (out ? '<button class="btn block" disabled>Complet</button>' : '<button class="btn block" data-act="event" data-id="' + ev.id + '">Obtenir des tickets</button>') + '</div></article>';
+}
+function cotiCard(c) {
+  var pct = Math.min(100, Math.round(c.raised / c.goal * 100)), fav = db().fav[c.id];
+  return '<article class="card coti"><div class="poster" style="aspect-ratio:16/10"><div class="bg" style="background:linear-gradient(160deg,' + c.pal[0] + ',' + c.pal[1] + ')"></div>' +
+    '<div class="shape" style="width:60%;aspect-ratio:1;right:-12%;top:-14%;background:rgba(255,255,255,.14)"></div>' +
+    '<span class="tag">' + esc(c.cat) + '</span><button class="favb" data-act="fav" data-id="' + c.id + '" aria-label="Ajouter aux favoris" aria-pressed="' + (!!fav) + '">' + (fav ? solidHeart() : ic('heart')) + '</button><span class="tag" style="top:auto;bottom:12px;display:flex;gap:8px;align-items:center">' + flagSvg[c.cc] + COUNTRIES[c.cc].name + '</span></div>' +
+    '<div class="body"><h3>' + esc(c.title) + '</h3><div class="progress" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
+    '<div class="coti-row"><span><b>' + fmt(c.raised) + '</b> F CFA collectés</span><span>' + pct + ' %</span></div>' +
+    '<div class="coti-row"><span>' + c.donors + ' contributeur' + (c.donors > 1 ? 's' : '') + '</span><span>Objectif ' + fmt(c.goal) + '</span></div>' +
+    '<button class="btn block ghost" data-act="contribute" data-id="' + c.id + '">Contribuer</button></div></article>';
+}
+function tkChip(t) {
+  var st = t.status;
+  if (st === 'used') return '<span class="chip used">Utilisé</span>'; if (st === 'cancelled') return '<span class="chip bad">Annulé</span>';
+  if (st === 'transferred') return '<span class="chip draft">Transféré</span>'; if (st === 'exchanged') return '<span class="chip draft">Échangé</span>';
+  var ev = getEv(t.evId); if (ev && TO.isPast(ev, t.dateIdx)) return '<span class="chip draft">Passé</span>';
+  return '<span class="chip ok">Valide</span>';
+}
+function tkCard(t) {
+  var ev = getEv(t.evId); if (!ev) return '';
+  var live = t.status === 'valid' && !TO.isPast(ev, t.dateIdx);
+  return '<div class="tk"><div class="tk-head"><h4>' + esc(ev.title) + '</h4>' + tkChip(t) + '</div>' +
+    '<div class="meta">' + ic('cal') + '<span>' + dateText(ev, t.dateIdx) + '</span></div>' +
+    '<div class="meta">' + ic('pin') + '<span>' + esc(ev.venue) + ', ' + esc(ev.city) + '</span></div>' +
+    '<div class="tk-perf"><div class="qrbox' + (live ? '' : ' dim') + '">' + TO.qr(t.code) + '</div>' +
+    '<div class="tk-info"><span class="label-cap" style="margin:0">' + esc(t.tierName) + '</span><b class="code">' + t.code + '</b><span class="who">' + esc(t.holder) + (t.from ? ' · reçu par transfert' : '') + '</span>' +
+    '<button class="btn sm ghost" data-act="tkopen" data-code="' + t.code + '">' + ic('ticket') + ' ' + (live ? 'Détails et options' : 'Détails') + '</button></div></div></div>';
+}
+function seg(a, b, cur, act) { return '<div class="seg" role="tablist"><button role="tab" class="' + (cur === a[0] ? 'on' : '') + '" data-act="' + act + '" data-v="' + a[0] + '">' + ic(a[2]) + '<span>' + a[1] + '</span></button><button role="tab" class="' + (cur === b[0] ? 'on' : '') + '" data-act="' + act + '" data-v="' + b[0] + '">' + ic(b[2]) + '<span>' + b[1] + '</span></button></div>'; }
+function subtabs(list, cur, act) { return '<div class="subtabs" role="tablist">' + list.map(function (x) { return '<button role="tab" class="' + (cur === x[0] ? 'on' : '') + '" data-act="' + act + '" data-v="' + x[0] + '">' + x[1] + (x[2] != null ? ' <i>' + x[2] + '</i>' : '') + '</button>'; }).join('') + '</div>'; }
+function emptyBox(icon, title, text, btn) { return '<div class="empty"><span class="ring">' + ic(icon) + '</span><h3>' + title + '</h3>' + (text ? '<p>' + text + '</p>' : '') + (btn || '') + '</div>'; }
+function backBar(title, right) { return '<div class="topbar"><button class="round-btn" data-act="back" aria-label="Retour">' + ic('back') + '</button><b style="font-family:var(--f-display);font-size:20px;text-align:center;flex:1">' + title + '</b>' + (right || '<span style="width:42px"></span>') + '</div>'; }
+function bellBtn() { var u = unread(); return '<button class="round-btn" data-act="notif" aria-label="Notifications">' + ic('bell') + (u ? '<span class="badge">' + u + '</span>' : '') + '</button>'; }
+
+/* ---------- écrans ---------- */
+function topHome() {
+  return '<div class="topbar"><button class="pill-btn" data-act="country" aria-label="Changer de pays">' + ic('pin') + '<span>' + COUNTRIES[S.country].name + '</span>' + flagSvg[S.country] + ic('chevd') + '</button>' +
+    '<div class="icons"><button class="round-btn" data-act="wallet" aria-label="Portefeuille">' + ic('wallet') + '</button>' +
+    '<button class="round-btn" data-act="favs" aria-label="Favoris">' + ic('heart') + '</button>' + bellBtn() + '</div></div>';
+}
+function installBanner() {
+  if (isStandalone() || TO.pref('install_dismissed') === '1') return '';
+  return '<div class="install"><span class="install-ic">' + ic('phone') + '</span><div class="txt"><b>Installer Ticket Option</b><span class="t">Gardez vos billets sur l\'écran d\'accueil, même sans réseau.</span></div>' +
+    '<button class="btn sm" data-act="install">Installer</button><button class="x" data-act="dismissinstall" aria-label="Masquer">' + ic('x') + '</button></div>';
+}
+function vHome() {
+  var all = pubEvents().filter(function (e) { return !TO.isPast(e, e.dates.length - 1); }).sort(function (a, b) { return (b.cc === S.country) - (a.cc === S.country) || b.likes - a.likes; });
+  if (S.q) { var q = S.q.toLowerCase(); all = all.filter(function (e) { return (e.title + ' ' + e.city + ' ' + e.cat + ' ' + e.venue).toLowerCase().indexOf(q) > -1; }); }
+  var co = db().collects.slice().sort(function (a, b) { return (b.cc === S.country) - (a.cc === S.country); });
+  return topHome() + installBanner() +
+    '<label class="search">' + ic('search') + '<input id="q" type="search" placeholder="Rechercher un événement" value="' + esc(S.q) + '" autocomplete="off" aria-label="Rechercher"></label>' +
+    '<div class="section-head"><div><h2>Événements</h2><p>Les plus populaires</p></div><button class="btn sm" data-act="allev">Voir tout ' + ic('chevr') + '</button></div>' +
+    (all.length ? '<div class="rail">' + all.map(eventCard).join('') + '</div>' : '<div class="empty">' + ic('search') + '<h3>Aucun résultat</h3><p>Essayez un autre nom d\'événement ou une autre ville.</p></div>') +
+    (S.q ? '' : '<div class="section-head"><div><h2>Cotisations</h2><p>Les plus populaires</p></div><button class="btn sm" data-act="allco">Voir tout ' + ic('chevr') + '</button></div><div class="rail">' + co.map(cotiCard).join('') + '</div>') +
+    '<p class="note">Événements et cotisations affichés à titre d\'exemple pour cette démonstration.</p>';
+}
+function tierBadge(t) {
+  var st = TO.tierStatus(t);
+  return st === 'out' ? '<span class="status out">' + ic('xcircle') + 'Épuisé</span>' : st === 'risk' ? '<span class="status risk">' + ic('cube') + 'Risque de rupture</span>' : st === 'low' ? '<span class="status low">' + ic('warn') + 'Bientôt épuisé</span>' : st === 'hot' ? '<span class="status hot">' + ic('trend') + 'Forte demande</span>' : '';
+}
+function vEvent(id) {
+  var ev = getEv(id);
+  if (!ev) return '<div class="empty">' + ic('ticket') + '<h3>Événement introuvable</h3><button class="btn" data-act="back">Retour</button></div>';
+  var T = cartTotal(ev), fav = db().fav[id], past = TO.isPast(ev, ev.dates.length - 1);
+  S.dateIdx = Math.min(S.dateIdx, ev.dates.length - 1);
+  var d = TO.dateParts(ev.dates[S.dateIdx]);
+  var h = '<div class="detail"><div class="detail-top"><button class="round-btn" data-act="back" aria-label="Retour">' + ic('back') + '</button><div class="icons"><button class="round-btn" data-act="share" aria-label="Partager">' + ic('upload') + '</button><button class="round-btn" data-act="fav" data-id="' + id + '" aria-label="Favori" aria-pressed="' + (!!fav) + '">' + (fav ? solidHeart() : ic('heart')) + '</button></div></div>' +
+    (ev.status !== 'published' ? '<div class="notice">' + ic('warn') + '<span>Brouillon : cet événement n\'est pas visible du public.</span></div>' : '') +
+    '<h1>' + esc(ev.title) + '</h1><div class="sub">' + esc(ev.cat) + '</div>' +
+    '<div class="rows"><div class="row">' + ic('cal') + '<span>' + d.short + ' à ' + d.t + '</span></div>' +
+    '<div class="row">' + ic('pin') + '<span>' + esc(ev.venue) + ', ' + esc(ev.city) + ', ' + COUNTRIES[ev.cc].name + '</span></div>' +
+    '<div class="row">' + ic('user') + '<span class="org">' + esc(ev.org) + '</span></div></div>' +
+    '<div style="border-radius:22px;overflow:hidden">' + poster(ev, { tall: true, noTag: true }) + '</div>' +
+    '<div class="tabs2" role="tablist"><button role="tab" class="' + (S.detailTab === 'tickets' ? 'on' : '') + '" data-act="dtab" data-v="tickets">Tickets</button><button role="tab" class="' + (S.detailTab === 'details' ? 'on' : '') + '" data-act="dtab" data-v="details">Détails</button></div>';
+  if (S.detailTab === 'tickets') {
+    if (ev.dates.length > 1) h += '<div class="dates">' + ev.dates.map(function (x, i) { var p = TO.dateParts(x); return '<button class="date-chip' + (i === S.dateIdx ? ' on' : '') + '" data-act="date" data-i="' + i + '"><small>' + p.w + '</small><strong>' + p.d + '</strong><span>' + p.m + ' · ' + p.t + '</span></button>'; }).join('') + '</div>';
+    h += '<p class="label-cap">Lieu de cette date</p><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><div class="venue-name">' + esc(ev.city) + ', ' + COUNTRIES[ev.cc].name + '</div><div style="color:var(--muted)">' + esc(ev.venue) + '</div></div><span style="color:var(--accent)">' + ic('mappin') + '</span></div>' +
+      '<a class="btn block ghost" style="margin-top:18px" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ev.venue + ' ' + ev.city) + '">' + ic('map') + ' Voir le plan du lieu</a>';
+    if (past) h += '<div class="notice" style="margin-top:16px">' + ic('cal') + '<span>Cet événement est terminé : la vente est fermée.</span></div>';
+    ev.tiers.forEach(function (t) {
+      var k = ev.id + ':' + t.id, rem = TO.remaining(t), q = Math.min(S.qty[k] || 0, rem), st = TO.tierStatus(t), max = Math.min(10, rem), off = st === 'out' || past || ev.status !== 'published';
+      h += '<div class="tier' + (st === 'out' ? ' soldout' : '') + '"><div class="tier-top"><h4>' + esc(t.name) + '</h4>' + tierBadge(t) + '</div>' +
+        '<div class="tier-bottom"><span class="price">' + fmt(t.price) + ' F CFA</span>' +
+        (off ? '' : '<div class="stepper"><button data-act="dec" data-k="' + k + '" aria-label="Retirer un billet" ' + (q === 0 ? 'disabled' : '') + '>' + ic('minus') + '</button><output aria-live="polite">' + q + '</output><button data-act="inc" data-k="' + k + '" aria-label="Ajouter un billet" ' + (q >= max ? 'disabled' : '') + '>' + ic('plus') + '</button></div>') + '</div>' +
+        '<details><summary>Détails du ticket ' + ic('chevd') + '</summary><p>' + esc(t.desc || 'Billet ' + t.name + '.') + (st === 'low' || st === 'risk' ? ' Il reste ' + rem + ' place' + (rem > 1 ? 's' : '') + '.' : '') + '</p></details></div>';
+    });
+  } else {
+    h += '<div class="about"><p>' + esc(ev.desc || 'Aucune description.') + '</p><dl><dt>Organisateur</dt><dd>' + esc(ev.org) + '</dd><dt>Catégorie</dt><dd>' + esc(ev.cat) + '</dd><dt>Lieu</dt><dd>' + esc(ev.venue) + ', ' + esc(ev.city) + '</dd><dt>Dates</dt><dd>' + ev.dates.map(function (x) { return TO.dateParts(x).short; }).join(', ') + '</dd></dl></div>';
+  }
+  h += '</div>';
+  if (T.n) {
+    var open = S.cpnOpen || T.coupon;
+    h += '<div class="cartpanel"><div class="cp-row"><div class="cp-total"><span>Total :</span> <b>' + fmt(T.total) + ' F <small>CFA</small></b></div><span class="pill">' + (T.n < 10 ? '0' : '') + T.n + ' ticket' + (T.n > 1 ? 's' : '') + '</span><button class="xbtn" data-act="clearcart" aria-label="Vider le panier">' + ic('x') + '</button></div>' +
+      (T.coupon ? '<div class="cp-disc">' + ic('ticket') + '<span>Code ' + esc(T.coupon.code) + ' appliqué</span><b>− ' + fmt(T.disc) + ' F</b><button data-act="cpn-off" aria-label="Retirer le code">' + ic('x') + '</button></div>'
+        : '<button class="coupon" data-act="cpn-toggle" aria-expanded="' + (!!S.cpnOpen) + '">' + ic('ticket') + '<span>Code coupon</span>' + ic('chevd', 'chev') + '</button>' +
+        (S.cpnOpen ? '<div class="cp-in"><input id="cpn" placeholder="Votre code" autocomplete="off" autocapitalize="characters" aria-label="Code coupon"><button class="btn sm" data-act="cpn-apply">Appliquer</button></div><p id="cpn-err" class="cp-err" role="alert"></p>' : '')) +
+      '<button class="btn block" data-act="checkout">Continuer</button></div>';
+  }
+  return h;
+}
+function vRecap(id) {
+  var ev = getEv(id), H = S.hold, b = db().buyer;
+  if (!ev || !H) return backBar('Récapitulatif') + emptyBox('ticket', 'Session expirée', 'Reprenez la sélection de vos billets.', '<button class="btn" style="margin-top:12px" data-act="back">Retour</button>');
+  var sub = 0, lines = H.items.map(function (i) { var t = TO.find(ev.tiers, i.tierId); sub += t.price * i.qty; return '<div class="rl"><span>' + esc(t.name) + '</span><b>' + i.qty + ' × ' + money(t.price) + '</b></div>'; }).join('');
+  var cp = S.coupon[ev.id] ? TO.checkCoupon(S.coupon[ev.id].code, ev.id, sub) : null, disc = cp && cp.ok ? cp.discount : 0; H.sub = sub; H.disc = disc; H.total = sub - disc; H.code = cp && cp.ok ? cp.coupon.code : '';
+  return '<div class="topbar rc-top"><button class="round-btn" data-act="back" aria-label="Retour">' + ic('back') + '</button><div class="rc-title"><b>Récapitulatif de commande</b><span class="timer" aria-live="off">' + ic('clock') + '<span id="cd">20min 00s</span></span></div><span style="width:42px"></span></div>' +
+    '<div class="box rc-ev">' + thumb(ev) + '<div><h4>' + esc(ev.title) + '</h4><small>' + esc(ev.venue) + ', ' + esc(ev.city) + '</small><small>' + TO.dateParts(ev.dates[H.dateIdx]).short + ' à ' + TO.dateParts(ev.dates[H.dateIdx]).t + '</small></div></div>' +
+    '<div class="box"><h3 class="bh">' + ic('bag') + ' Votre commande</h3>' + lines + (disc ? '<div class="rl"><span>Réduction ' + esc(H.code) + '</span><b style="color:var(--ok)">− ' + money(disc) + '</b></div>' : '') + '</div>' +
+    '<div class="box total"><span>Total</span><b>' + money(H.total) + '</b></div>' +
+    '<div class="box"><h3 class="bh">' + ic('user') + ' Vos coordonnées</h3><div class="field"><label for="g-name">Nom complet</label><input id="g-name" autocomplete="name" value="' + esc(b.name) + '"></div>' +
+    '<div class="two"><div class="field"><label for="g-phone">Téléphone</label><input id="g-phone" inputmode="tel" autocomplete="tel" placeholder="70 00 00 00" value="' + esc(b.phone) + '"></div><div class="field"><label for="g-mail">E-mail (facultatif)</label><input id="g-mail" type="email" autocomplete="email" value="' + esc(b.email) + '"></div></div>' +
+    '<p id="gerr" class="cp-err" role="alert"></p></div>' +
+    '<div class="stickyfoot"><button class="btn block" data-act="topay">Procéder au paiement</button></div>';
+}
+function orderTickets() { var d = db(), ids = {}; TO.ordersOfDevice().forEach(function (o) { ids[o.id] = 1; }); return d.tickets.filter(function (t) { return ids[t.orderId]; }); }
+function tkGroup(t) {
+  if (t.status === 'transferred') return 'transferred'; if (t.status === 'exchanged') return 'exchanged'; if (t.status === 'cancelled') return 'cancelled'; if (t.status === 'used') return 'past';
+  var ev = getEv(t.evId); return ev && TO.isPast(ev, t.dateIdx) ? 'past' : 'upcoming';
+}
+function vOrders() {
+  var h = '<div class="topbar"><h2 class="ttl">Mes commandes</h2>' + bellBtn() + '</div>' + seg(['tickets', 'Mes tickets', 'ticket'], ['contrib', 'Mes contributions', 'bag'], S.otab, 'otab');
+  if (S.otab === 'contrib') {
+    var ks = TO.contribsOfDevice();
+    if (!ks.length) return h + emptyBox('bag', 'Aucune contribution', 'Les cotisations auxquelles vous contribuez apparaîtront ici.', '<button class="btn" style="margin-top:12px" data-act="tab" data-v="home">Voir les cotisations</button>');
+    return h + ks.map(function (k) { var c = getCo(k.collId); return '<div class="row-item"><span class="thumb" style="background:linear-gradient(160deg,' + (c ? c.pal[0] : '#333') + ',' + (c ? c.pal[1] : '#666') + ')"></span><span class="info"><h4>' + esc(c ? c.title : 'Cotisation') + '</h4><small>' + TO.dateTimeLabel(k.createdAt) + ' · ' + (PAYM[k.payment.method] ? PAYM[k.payment.method].name : 'Paiement') + '</small><small>' + esc(k.ref) + (k.anonymous ? ' · anonyme' : '') + '</small><span class="chip ok">' + money(k.amount) + '</span></span></div>'; }).join('');
+  }
+  var all = orderTickets(), cnt = { upcoming: 0, transferred: 0, exchanged: 0, cancelled: 0, past: 0 };
+  all.forEach(function (t) { cnt[tkGroup(t)]++; });
+  h += subtabs([['upcoming', 'À venir', cnt.upcoming], ['transferred', 'Transférés', cnt.transferred], ['exchanged', 'Échangés', cnt.exchanged], ['cancelled', 'Annulés', cnt.cancelled], ['past', 'Passés', cnt.past]], S.osub, 'osub');
+  h += '<details class="collapse find"' + (S.findOpen ? ' open' : '') + '><summary><span class="ci">' + ic('cube') + '</span><span>Vous ne trouvez pas vos tickets ?</span>' + ic('chevd', 'chev') + '</summary><div class="cb"><p>Retrouvez une commande faite sur un autre téléphone avec sa référence (CMD-XXXXXX) ou le numéro utilisé à l\'achat.</p><div class="cp-in"><input id="claim" placeholder="CMD-… ou téléphone" autocomplete="off" aria-label="Référence ou téléphone"><button class="btn sm" data-act="claim">Rechercher</button></div><p id="claim-err" class="cp-err" role="alert"></p></div></details>';
+  var list = all.filter(function (t) { return tkGroup(t) === S.osub; }).sort(function (a, b) { return b.createdAt - a.createdAt; });
+  if (!list.length) {
+    var m = { upcoming: ['Aucun billet à venir', 'Découvrez des événements passionnants et réservez vos tickets.', true], transferred: ['Aucun billet transféré', 'Les billets que vous offrez à un proche apparaîtront ici.'], exchanged: ['Aucun billet échangé', 'Les billets que vous échangez contre une autre catégorie apparaîtront ici.'], cancelled: ['Aucun billet annulé', 'Les billets annulés par l\'organisateur apparaîtront ici.'], past: ['Aucun événement passé', 'Vos billets utilisés ou expirés apparaîtront ici.'] }[S.osub];
+    return h + emptyBox('cal', m[0], m[1], m[2] ? '<button class="btn block" style="margin-top:22px" data-act="tab" data-v="home">Explorer les événements</button>' : '');
+  }
+  return h + '<div class="tklist">' + list.map(tkCard).join('') + '</div>';
+}
+function vPosts() {
+  var d = db(), evs = myEvents(), cos = myCollects();
+  var h = '<div class="topbar"><h2 class="ttl">Mes publications</h2>' + bellBtn() + '</div>' + seg(['events', 'Mes événements', 'cal'], ['coll', 'Mes cotisations', 'bag'], S.ptab, 'ptab');
+  var sold = 0, rev = 0, used = 0;
+  evs.forEach(function (e) { e.tiers.forEach(function (t) { sold += t.sold; }); });
+  d.orders.forEach(function (o) { var e = TO.find(evs, o.evId); if (e && o.status !== 'cancelled') rev += o.total; });
+  d.tickets.forEach(function (t) { if (t.status === 'used' && TO.find(evs, t.evId)) used++; });
+  var raised = cos.reduce(function (a, c) { return a + c.raised; }, 0);
+  h += '<details class="collapse"' + (S.statOpen ? ' open' : '') + '><summary><span class="ci">' + ic('chart') + '</span><span>Statistiques</span>' + ic('chevd', 'chev') + '</summary><div class="cb kpis"><div><b>' + evs.length + '</b><span>Événements</span></div><div><b>' + fmt(sold) + '</b><span>Billets vendus</span></div><div><b>' + fmt(rev) + '</b><span>Recettes (F CFA)</span></div><div><b>' + fmt(used) + '</b><span>Entrées validées</span></div><div><b>' + cos.length + '</b><span>Cotisations</span></div><div><b>' + fmt(raised) + '</b><span>Collecté (F CFA)</span></div></div></details>';
+  if (S.ptab === 'coll') {
+    if (!cos.length) return h + emptyBox('bag', 'Aucune cotisation', 'Lancez une collecte entre amis, collègues ou proches.', '<button class="btn" style="margin-top:12px" data-act="newco">' + ic('plus') + ' Créer une cotisation</button>');
+    return h + cos.map(function (c) { var pct = Math.min(100, Math.round(c.raised / c.goal * 100)); return '<div class="row-item col"><span class="thumb" style="background:linear-gradient(160deg,' + c.pal[0] + ',' + c.pal[1] + ')"></span><span class="info"><h4>' + esc(c.title) + '</h4><small>' + fmt(c.raised) + ' / ' + fmt(c.goal) + ' F CFA · ' + c.donors + ' contributeur' + (c.donors > 1 ? 's' : '') + '</small><div class="progress" style="margin-top:8px"><i style="width:' + pct + '%"></i></div></span></div>'; }).join('');
+  }
+  h += subtabs([['upcoming', 'À venir'], ['past', 'Passés'], ['draft', 'Brouillons']], S.psub, 'psub');
+  h += '<label class="search" style="margin:6px 0 14px">' + ic('search') + '<input id="pq" type="search" placeholder="Rechercher…" value="' + esc(S.pq) + '" autocomplete="off" aria-label="Rechercher dans mes événements"></label>';
+  var q = S.pq.toLowerCase(), list = evs.filter(function (e) {
+    var past = TO.isPast(e, e.dates.length - 1), g = e.status !== 'published' ? 'draft' : past ? 'past' : 'upcoming';
+    return g === S.psub && (!q || (e.title + ' ' + e.city).toLowerCase().indexOf(q) > -1);
+  });
+  if (!list.length) return h + emptyBox('cal', S.psub === 'draft' ? 'Aucun brouillon' : S.psub === 'past' ? 'Aucun événement passé' : 'Aucun événement à venir', S.psub === 'upcoming' ? 'Vos événements à venir apparaîtront ici.' : 'Ils apparaîtront ici.', S.psub === 'upcoming' ? '<button class="btn" style="margin-top:12px" data-act="newev">' + ic('plus') + ' Créer un événement</button>' : '');
+  return h + list.map(function (e) {
+    var s = 0, k = 0; e.tiers.forEach(function (t) { s += t.sold; k += t.stock; });
+    return '<button class="row-item" data-act="manage" data-id="' + e.id + '">' + thumb(e) + '<span class="info"><h4>' + esc(e.title) + '</h4><small>' + dateText(e, 0) + ' · ' + esc(e.city) + '</small><small>' + s + ' / ' + k + ' billets vendus</small>' + (e.status === 'published' ? '<span class="chip ok">En vente</span>' : '<span class="chip draft">Brouillon</span>') + '</span>' + ic('chevr', 'chev') + '</button>';
+  }).join('');
+}
+function vManage(id) {
+  var e = getEv(id), d = db();
+  if (!e) return backBar('Événement') + emptyBox('cal', 'Événement introuvable', '', '');
+  var orders = d.orders.filter(function (o) { return o.evId === id && o.status !== 'cancelled'; }), rev = orders.reduce(function (a, o) { return a + o.total; }, 0), sold = 0, stock = 0, used = d.tickets.filter(function (t) { return t.evId === id && t.status === 'used'; }).length;
+  e.tiers.forEach(function (t) { sold += t.sold; stock += t.stock; });
+  var com = d.settings.commission || 0;
+  return backBar('Gérer l\'événement') + '<div style="border-radius:22px;overflow:hidden">' + poster(e, { tall: true }) + '</div>' +
+    '<h1 class="mh">' + esc(e.title) + '</h1><div class="meta" style="margin-bottom:6px">' + ic('cal') + '<span>' + dateText(e, 0) + '</span></div><div class="meta">' + ic('pin') + '<span>' + esc(e.venue) + ', ' + esc(e.city) + '</span></div>' +
+    '<div class="kpis box" style="margin-top:16px"><div><b>' + fmt(sold) + '/' + fmt(stock) + '</b><span>Billets vendus</span></div><div><b>' + fmt(rev) + '</b><span>Recettes (F CFA)</span></div><div><b>' + fmt(used) + '</b><span>Entrées validées</span></div></div>' +
+    '<div class="box"><h3 class="bh">' + ic('ticket') + ' Billets</h3>' + e.tiers.map(function (t) { var p = t.stock ? Math.round(t.sold / t.stock * 100) : 0; return '<div class="mtier"><div class="rl"><span>' + esc(t.name) + '</span><b>' + fmt(t.price) + ' F</b></div><div class="progress"><i style="width:' + p + '%"></i></div><small>' + t.sold + ' vendus sur ' + t.stock + '</small></div>'; }).join('') + '</div>' +
+    '<div class="list" style="margin:16px 0"><button class="list-item" data-act="gate" data-id="' + id + '">' + ic('scan') + '<span>Contrôler les entrées</span>' + ic('chevr', 'chev') + '</button><button class="list-item" data-act="guests" data-id="' + id + '">' + ic('users') + '<span>Participants (' + orders.length + ')</span>' + ic('chevr', 'chev') + '</button><button class="list-item" data-act="editev" data-id="' + id + '">' + ic('edit') + '<span>Modifier l\'événement</span>' + ic('chevr', 'chev') + '</button><button class="list-item" data-act="viewev" data-id="' + id + '">' + ic('eye') + '<span>Voir la page publique</span>' + ic('chevr', 'chev') + '</button><button class="list-item" data-act="togglepub" data-id="' + id + '">' + ic('globe') + '<span>' + (e.status === 'published' ? 'Passer en brouillon (retirer de la vente)' : 'Publier (mettre en vente)') + '</span>' + ic('chevr', 'chev') + '</button><button class="list-item danger" data-act="delev" data-id="' + id + '">' + ic('trash') + '<span>Supprimer</span>' + ic('chevr', 'chev') + '</button></div>' +
+    '<p class="note">Les recettes arrivent dans votre portefeuille après l\'événement, avec ' + com + ' % de frais de service retirés.</p>';
+}
+function vAccount() {
+  var b = db().buyer, n = TO.ordersOfDevice().length, pubs = myEvents().length + myCollects().length, favs = Object.keys(db().fav).filter(function (k) { return db().fav[k]; }).length;
+  var item = function (i, l, a, extra) { return '<button class="list-item ' + (extra || '') + '" data-act="' + a + '">' + ic(i) + '<span>' + l + '</span>' + ic('chevr', 'chev') + '</button>'; };
+  return '<div class="cover"><div class="acts"><button aria-label="Modifier le profil" data-act="profile">' + ic('edit') + '</button><button aria-label="Partager" data-act="share">' + ic('share') + '</button></div></div>' +
+    '<div class="profile"><div class="avatar" aria-hidden="true">' + esc(initials(b.name)) + '</div><h1>' + esc(b.name || 'Votre nom') + '</h1><div style="color:var(--muted);overflow-wrap:anywhere">' + esc(b.email || b.phone || 'Ajoutez vos coordonnées') + '</div>' +
+    '<div class="stats"><span><b>' + n + '</b> commande' + (n > 1 ? 's' : '') + '</span>·<span><b>' + pubs + '</b> publication' + (pubs > 1 ? 's' : '') + '</span>·<span><b>' + favs + '</b> favori' + (favs > 1 ? 's' : '') + '</span></div></div>' +
+    (isStandalone() ? '' : '<div class="list" style="margin-bottom:16px">' + item('phone', 'Installer l\'application', 'install', 'accent') + '</div>') +
+    '<div class="list">' + item('globe', 'Ma page publique', 'pubpage') + item('heart', 'Mes favoris', 'favs') + item('users', 'Ma communauté', 'community') + item('wallet', 'Mon portefeuille', 'wallet') + '</div>' +
+    '<div class="list" style="margin-top:16px">' + item('gear', 'Paramètres', 'settings') + item('shop', 'Points de vente', 'points') + item('star', 'Noter l\'App', 'rate') + item('headset', 'Aide et support', 'help') +
+    '<a class="list-item" href="admin/">' + ic('out') + '<span>Espace organisateur (ordinateur)</span>' + ic('chevr', 'chev') + '</a></div>';
+}
+var TXL = { sale: 'Vente', contrib: 'Contribution', payout: 'Retrait' };
+function vWallet() {
+  var w = TO.walletOf(db().device), min = db().settings.minPayout || 1000, hide = S.hide, v = function (n) { return hide ? '••••' : fmt(n); };
+  return '<div class="topbar"><button class="round-btn" data-act="back" aria-label="Retour">' + ic('back') + '</button><b style="font-family:var(--f-display);font-size:20px">Mon portefeuille</b><span class="pill-btn" style="font-size:14px;font-family:var(--f-body);font-weight:500">' + ic('coins') + ' F CFA (XOF)</span></div>' +
+    '<div class="wallet-card"><div style="display:flex;justify-content:space-between;color:var(--muted)"><span>Solde total</span><button data-act="hidebal" aria-label="' + (hide ? 'Afficher' : 'Masquer') + ' le solde">' + ic(hide ? 'eyeoff' : 'eye') + '</button></div><div class="big" style="margin-top:10px">' + v(w.total) + '<small>F CFA</small></div>' +
+    '<div class="wrow"><span><i class="dot" style="background:var(--ok)"></i>Disponible</span><b>' + v(w.available) + ' F CFA</b></div><div class="wrow"><span><i class="dot" style="background:var(--warn)"></i>En attente <button class="info-i" data-act="walletinfo" aria-label="Pourquoi en attente ?">i</button></span><b>' + v(w.pending) + ' F CFA</b></div>' +
+    '<button class="btn block' + (w.available >= min ? '' : ' line') + '" style="margin-top:20px" data-act="payout" ' + (w.available >= min ? '' : 'disabled') + '>' + ic('download') + ' Retirer</button></div>' +
+    (w.tx.length ? '<h3 class="subh">Transactions</h3>' + w.tx.map(function (x) {
+      var st = { available: ['Disponible', 'ok'], pending: ['En attente', 'used'], paid: ['Envoyé', 'ok'], processing: ['En cours', 'used'], rejected: ['Refusé', 'bad'] }[x.status];
+      return '<div class="tx"><span class="txi ' + (x.amount < 0 ? 'out' : 'in') + '">' + ic(x.amount < 0 ? 'send' : 'download') + '</span><span class="txm"><b>' + esc(x.label) + '</b><small>' + TO.dateTimeLabel(x.ts) + (x.gross && x.gross !== x.amount ? ' · brut ' + fmt(x.gross) + ' F' : '') + '</small></span><span class="txa"><b class="' + (x.amount < 0 ? 'neg' : '') + '">' + (x.amount < 0 ? '−' : '+') + fmt(Math.abs(x.amount)) + ' F</b><span class="chip ' + st[1] + '">' + st[0] + '</span></span></div>';
+    }).join('') : emptyBox('tray', 'Aucune transaction', 'Les ventes de vos événements et les contributions à vos cotisations apparaîtront ici.', ''));
+}
+function vFavs() {
+  var evs = pubEvents().filter(function (e) { return db().fav[e.id]; }), cos = db().collects.filter(function (c) { return db().fav[c.id]; });
+  var h = backBar('Mes favoris') + seg(['ev', 'Événements', 'cal'], ['co', 'Cotisations', 'bag'], S.ftab, 'ftab');
+  if (S.ftab === 'ev') return h + (evs.length ? evs.map(function (e) { return '<div style="margin-bottom:16px">' + eventCard(e).replace('class="card"', 'class="card" style="width:100%"') + '</div>'; }).join('') : emptyBox('heart', 'Aucun favori', 'Touchez le cœur d\'un événement pour le retrouver ici.', ''));
+  return h + (cos.length ? cos.map(function (c) { return '<div style="margin-bottom:16px">' + cotiCard(c).replace('class="card coti"', 'class="card" style="width:100%"') + '</div>'; }).join('') : emptyBox('heart', 'Aucune cotisation favorite', 'Touchez le cœur d\'une cotisation pour la retrouver ici.', ''));
+}
+function vAll(kind) {
+  var l = kind === 'ev' ? pubEvents().map(eventCard) : db().collects.map(cotiCard);
+  return backBar(kind === 'ev' ? 'Tous les événements' : 'Toutes les cotisations') + l.map(function (x) { return '<div style="margin-bottom:16px">' + x.replace(/class="card( coti)?"/, 'class="card" style="width:100%"') + '</div>'; }).join('');
+}
+function vNotifs() {
+  var l = TO.notifsOf();
+  return backBar('Notifications') + (l.length ? l.map(function (n) { return '<div class="notif' + (n.read ? '' : ' new') + '"><span class="ni">' + ic('bell') + '</span><span><b>' + esc(n.text) + '</b><small>' + ago(n.ts) + '</small></span></div>'; }).join('') : emptyBox('bell', 'Aucune notification', 'Vos confirmations de commande, ventes et retraits apparaîtront ici.', ''));
+}
+function vCommunity() {
+  var d = db(), evs = myEvents(), m = {};
+  d.orders.forEach(function (o) { if (o.status === 'cancelled' || !TO.find(evs, o.evId)) return; var k = (o.buyer.phone || o.buyer.name).replace(/\s/g, ''); var x = m[k] || (m[k] = { name: o.buyer.name, phone: o.buyer.phone, n: 0, total: 0 }); x.n += o.lines.reduce(function (a, l) { return a + l.qty; }, 0); x.total += o.total; });
+  var l = Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b.total - a.total; });
+  return backBar('Ma communauté') + (l.length ? '<p class="hint" style="text-align:left">' + l.length + ' personne' + (l.length > 1 ? 's ont' : ' a') + ' acheté des billets pour vos événements.</p>' + l.map(function (x) { return '<div class="row-item"><span class="avatar mini" style="flex:none;width:44px;height:44px;font-size:15px">' + esc(initials(x.name)) + '</span><span class="info"><h4 style="text-transform:none">' + esc(x.name) + '</h4><small>' + esc(x.phone || '') + '</small><span class="chip ok">' + x.n + ' billet' + (x.n > 1 ? 's' : '') + ' · ' + fmt(x.total) + ' F</span></span></div>'; }).join('') : emptyBox('users', 'Pas encore de communauté', 'Les personnes qui achètent des billets pour vos événements apparaîtront ici.', '<button class="btn" style="margin-top:12px" data-act="newev">' + ic('plus') + ' Créer un événement</button>'));
+}
+function vPublic() {
+  var b = db().buyer, evs = myEvents().filter(function (e) { return e.status === 'published'; }), cos = myCollects();
+  return backBar('Ma page publique', '<button class="round-btn" data-act="share" aria-label="Partager">' + ic('upload') + '</button>') +
+    '<div class="pubhead"><div class="avatar" style="margin:0 auto">' + esc(initials(b.name)) + '</div><h1>' + esc(b.name || 'Organisateur') + '</h1><p>' + evs.length + ' événement' + (evs.length > 1 ? 's' : '') + ' · ' + cos.length + ' cotisation' + (cos.length > 1 ? 's' : '') + '</p></div>' +
+    (evs.length || cos.length ? evs.map(function (e) { return '<div style="margin-bottom:16px">' + eventCard(e).replace('class="card"', 'class="card" style="width:100%"') + '</div>'; }).join('') + cos.map(function (c) { return '<div style="margin-bottom:16px">' + cotiCard(c).replace('class="card coti"', 'class="card" style="width:100%"') + '</div>'; }).join('') : emptyBox('globe', 'Votre page est vide', 'Publiez un événement ou une cotisation pour la remplir.', '<button class="btn" style="margin-top:12px" data-act="create">' + ic('plus') + ' Créer</button>'));
+}
+function vPoints() {
+  var l = db().points.filter(function (p) { return p.cc === S.country || true; });
+  return backBar('Points de vente') + '<p class="hint" style="text-align:left">Achetez vos billets en espèces auprès de nos points de vente partenaires.</p>' + (l.length ? l.map(function (p) { return '<div class="row-item"><span class="thumb" style="width:52px;height:52px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)">' + ic('shop') + '</span><span class="info"><h4 style="text-transform:none">' + esc(p.name) + (p.demo ? ' <span class="chip draft" style="margin:0">Exemple</span>' : '') + '</h4><small>' + esc(p.city) + ' · ' + COUNTRIES[p.cc].name + '</small><small>' + esc(p.address) + '</small><small>' + esc(p.hours || '') + '</small></span></div>'; }).join('') : emptyBox('shop', 'Aucun point de vente', 'Les points de vente apparaîtront ici.', ''));
+}
+function vSettings() {
+  var th = TO.pref('theme') || 'auto', opt = function (v, l) { return '<button class="opt' + (th === v ? ' on' : '') + '" data-act="settheme" data-v="' + v + '" aria-pressed="' + (th === v) + '">' + l + '</button>'; };
+  return backBar('Paramètres') + '<div class="box"><h3 class="bh">' + ic('moon') + ' Apparence</h3><div class="opts">' + opt('auto', 'Automatique') + opt('light', 'Clair') + opt('dark', 'Sombre') + '</div></div>' +
+    '<div class="list"><button class="list-item" data-act="logout">' + ic('back') + '<span>Se déconnecter</span>' + ic('chevr', 'chev') + '</button><button class="list-item" data-act="country">' + ic('globe') + '<span>Pays : ' + COUNTRIES[S.country].name + '</span>' + ic('chevr', 'chev') + '</button><button class="list-item" data-act="profile">' + ic('user') + '<span>Mon profil</span>' + ic('chevr', 'chev') + '</button>' + (isStandalone() ? '' : '<button class="list-item" data-act="install">' + ic('phone') + '<span>Installer l\'application</span>' + ic('chevr', 'chev') + '</button>') + '<button class="list-item" data-act="resetme">' + ic('trash') + '<span>Effacer les données de cet appareil</span>' + ic('chevr', 'chev') + '</button></div>' +
+    '<p class="note">Ticket Option 3.0 · Fabriqué au Burkina Faso<br>Mode démonstration : paiements simulés, données gardées sur cet appareil.</p>';
+}
+
+/* ---------- formulaires (événement et cotisation) ---------- */
+function dateRow(d) { return '<div class="frow dr"><input class="d-iso" type="date" value="' + esc(d.iso) + '" aria-label="Date"><input class="d-time" type="time" value="' + esc(d.time) + '" aria-label="Heure"><button type="button" class="rm" data-act="rmrow" aria-label="Retirer cette date">' + ic('x') + '</button></div>'; }
+function tierRow(t) { return '<div class="frow tr" data-id="' + esc(t.id || '') + '" data-sold="' + (t.sold || 0) + '"><input class="t-name" value="' + esc(t.name) + '" placeholder="Nom du billet" aria-label="Nom du billet"><input class="t-price" type="number" inputmode="numeric" min="0" value="' + esc(t.price) + '" placeholder="Prix F CFA" aria-label="Prix en F CFA"><input class="t-stock" type="number" inputmode="numeric" min="' + (t.sold || 1) + '" value="' + esc(t.stock) + '" placeholder="Places" aria-label="Nombre de places"><button type="button" class="rm" data-act="rmrow" aria-label="Retirer ce billet"' + (t.sold ? ' disabled title="Des billets sont déjà vendus"' : '') + '>' + ic('x') + '</button><input class="t-desc" value="' + esc(t.desc || '') + '" placeholder="Ce que comprend ce billet (facultatif)" aria-label="Description du billet"></div>'; }
+function vForm(kind, id) {
+  var ev = kind === 'ev', cur = ev && id ? getEv(id) : null, soon = TO.isoOf(Date.now() + 30 * 86400000);
+  if (!ev && id) cur = getCo(id);
+  var dates = cur && cur.dates ? cur.dates : [{ iso: soon, time: '20:00' }], tiers = cur && cur.tiers ? cur.tiers : [{ name: 'Standard', price: 5000, stock: 100, sold: 0, desc: '' }];
+  S.formImg = cur && cur.img ? cur.img : null;
+  var sel = function (v, list) { return list.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + x + '</option>'; }).join(''); };
+  return backBar(ev ? (cur ? 'Modifier l\'événement' : 'Créer un événement') : 'Créer une cotisation') +
+    '<form id="form" data-kind="' + kind + '" data-id="' + esc(id || '') + '" novalidate>' +
+    (ev ? '<div class="field"><label>Affiche (facultatif)</label><label class="imgup" for="f-img"><span id="f-prev">' + (S.formImg ? '<img src="' + S.formImg + '" alt="">' : ic('img') + '<b>Ajouter une image</b><small>JPG ou PNG</small>') + '</span></label><input id="f-img" type="file" accept="image/*" hidden></div>' : '') +
+    '<div class="field"><label for="f-title">' + (ev ? 'Nom de l\'événement' : 'Titre de la cotisation') + '</label><input id="f-title" required value="' + esc(cur ? cur.title : '') + '" placeholder="' + (ev ? 'Ex. Soirée de lancement' : 'Ex. Cadeau de départ de Moussa') + '"></div>' +
+    (ev ? '<div class="two"><div class="field"><label for="f-cat">Catégorie</label><select id="f-cat">' + sel(cur ? cur.cat : 'Concert', ['Concert', 'Festival', 'Conférence', 'Soirée', 'Atelier', 'Sport', 'Théâtre', 'Autre']) + '</select></div><div class="field"><label for="f-city">Ville</label><input id="f-city" placeholder="Ouagadougou" value="' + esc(cur ? cur.city : '') + '"></div></div>' +
+      '<div class="field"><label for="f-venue">Lieu</label><input id="f-venue" placeholder="Nom de la salle ou du stade" value="' + esc(cur ? cur.venue : '') + '"></div>' +
+      '<div class="field"><label for="f-desc">Description</label><textarea id="f-desc" rows="3" placeholder="Programme, accès, consignes">' + esc(cur ? cur.desc : '') + '</textarea></div>' +
+      '<div class="field"><label>Dates</label><div id="dates">' + dates.map(dateRow).join('') + '</div><button type="button" class="btn sm line" style="align-self:flex-start" data-act="adddate">' + ic('plus') + ' Ajouter une date</button></div>' +
+      '<div class="field"><label>Billets</label><div id="tiers">' + tiers.map(tierRow).join('') + '</div><button type="button" class="btn sm line" style="align-self:flex-start" data-act="addtier">' + ic('plus') + ' Ajouter un type de billet</button></div>'
+      : '<div class="two"><div class="field"><label for="f-cat">Type</label><select id="f-cat">' + sel(cur ? cur.cat : 'Solidarité', ['Solidarité', 'Anniversaire', 'Éducation', 'Mariage', 'Autre']) + '</select></div><div class="field"><label for="f-goal">Objectif en F CFA</label><input id="f-goal" type="number" inputmode="numeric" min="1000" value="' + (cur ? cur.goal : 200000) + '"></div></div>') +
+    '<p id="f-err" style="color:var(--accent);margin:0 0 12px;min-height:1.2em" role="alert"></p>' +
+    (ev ? '<div class="two"><button class="btn block line" type="submit" value="draft">Brouillon</button><button class="btn block" type="submit" value="published">Publier</button></div>' : '<button class="btn block" type="submit" value="published">Publier</button>') + '</form>';
+}
+function submitForm(e) {
+  e.preventDefault();
+  var kind = e.target.getAttribute('data-kind'), id = e.target.getAttribute('data-id'), t = document.getElementById('f-title').value.trim(), err = document.getElementById('f-err'), d = db();
+  var status = (e.submitter && e.submitter.value) || 'published';
+  var fail = function (m, f) { err.textContent = m; var x = typeof f === 'string' ? document.getElementById(f) : f; if (x) x.focus(); };
+  if (!t) return fail('Ajoutez un nom pour continuer.', 'f-title');
+  var pal = PALS[Math.floor(Math.random() * PALS.length)];
+  if (kind === 'ev') {
+    var dates = [].map.call(document.querySelectorAll('#dates .dr'), function (r) { return { iso: r.querySelector('.d-iso').value, time: r.querySelector('.d-time').value || '20:00' }; });
+    if (!dates.length || dates.some(function (x) { return !x.iso; })) return fail('Chaque date doit être remplie.', document.querySelector('#dates .d-iso'));
+    var tiers = [].map.call(document.querySelectorAll('#tiers .tr'), function (r) { return { id: r.getAttribute('data-id'), sold: +r.getAttribute('data-sold') || 0, name: r.querySelector('.t-name').value.trim(), price: r.querySelector('.t-price').value, stock: r.querySelector('.t-stock').value, desc: r.querySelector('.t-desc').value.trim(), el: r }; });
+    if (!tiers.length) return fail('Ajoutez au moins un type de billet.');
+    for (var i = 0; i < tiers.length; i++) {
+      var x = tiers[i];
+      if (!x.name) return fail('Chaque billet a besoin d\'un nom.', x.el.querySelector('.t-name'));
+      if (x.price === '' || isNaN(+x.price) || +x.price < 0) return fail('Le prix de « ' + x.name + ' » doit être un nombre positif.', x.el.querySelector('.t-price'));
+      if (x.stock === '' || isNaN(+x.stock) || +x.stock < 1) return fail('Indiquez au moins une place pour « ' + x.name + ' ».', x.el.querySelector('.t-stock'));
+      if (+x.stock < x.sold) return fail('« ' + x.name + ' » a déjà ' + x.sold + ' billets vendus : les places ne peuvent pas descendre sous ce nombre.', x.el.querySelector('.t-stock'));
+    }
+    tiers.forEach(function (x) { delete x.el; });
+    var cur = id ? getEv(id) : null;
+    var o = { id: id || '', title: t, cat: document.getElementById('f-cat').value, cc: cur ? cur.cc : S.country, city: document.getElementById('f-city').value.trim() || 'Ouagadougou', venue: document.getElementById('f-venue').value.trim() || 'Lieu à confirmer', desc: document.getElementById('f-desc').value.trim(), status: status, dates: dates, tiers: tiers, img: S.formImg || '' };
+    if (!cur) { o.org = d.buyer.name || 'Organisateur'; o.pal = pal; o.likes = 0; o.device = d.device; }
+    TO.upsertEvent(o);
+    S.stack = []; S.tab = 'posts'; S.ptab = 'events'; S.psub = status === 'published' ? 'upcoming' : 'draft'; render();
+    toast(cur ? 'Événement enregistré' : status === 'published' ? 'Événement publié' : 'Brouillon enregistré');
+  } else {
+    var g = parseInt(document.getElementById('f-goal').value, 10);
+    if (isNaN(g) || g < 1000) return fail('L\'objectif doit être d\'au moins 1 000 F CFA.', 'f-goal');
+    if (id) { var c0 = getCo(id); c0.title = t; c0.cat = document.getElementById('f-cat').value; c0.goal = g; TO.commit(); }
+    else TO.addCollect({ title: t, cat: document.getElementById('f-cat').value, cc: S.country, raised: 0, goal: g, donors: 0, pal: [pal[0], pal[1]], device: d.device });
+    S.stack = []; S.tab = 'posts'; S.ptab = 'coll'; render(); toast('Cotisation publiée');
+  }
+}
+
+/* ---------- navigation et rendu ---------- */
+function current() { return S.stack.length ? S.stack[S.stack.length - 1] : { v: S.tab }; }
+function renderTab() {
+  var T = [['home', 'Accueil', 'home'], ['orders', 'Commandes', 'ticket'], null, ['posts', 'Publications', 'cal'], ['account', 'Compte', 'user']];
+  $t.innerHTML = T.map(function (t) {
+    if (!t) return '<button class="fab" data-act="create" aria-label="Créer">' + ic('plus') + '</button>';
+    var on = !S.stack.length && S.tab === t[0];
+    var icon = t[0] === 'account' ? '<span class="avatar mini">' + esc(initials(db().buyer.name)) + '</span>' : ic(t[2]);
+    return '<button class="tab' + (on ? ' on' : '') + '" data-act="tab" data-v="' + t[0] + '"' + (on ? ' aria-current="page"' : '') + '>' + icon + '<span>' + t[1] + '</span></button>';
+  }).join('');
+  $t.style.display = current().v === 'recap' ? 'none' : '';
+}
+function render(keep) {
+  var c = current(), y = keep ? $v.scrollTop : 0, h;
+  if (S.cd && c.v !== 'recap') { clearInterval(S.cd); S.cd = null; }
+  switch (c.v) {
+    case 'home': h = vHome(); break; case 'orders': h = vOrders(); break; case 'posts': h = vPosts(); break; case 'account': h = vAccount(); break;
+    case 'event': h = vEvent(c.id); break; case 'recap': h = vRecap(c.id); break; case 'manage': h = vManage(c.id); break;
+    case 'wallet': h = vWallet(); break; case 'favs': h = vFavs(); break; case 'all': h = vAll(c.kind); break; case 'form': h = vForm(c.kind, c.id); break;
+    case 'notifs': h = vNotifs(); break; case 'community': h = vCommunity(); break; case 'pubpage': h = vPublic(); break; case 'points': h = vPoints(); break; case 'settings': h = vSettings(); break;
+    default: h = '';
+  }
+  var rail = keep && $v.querySelector('.rail') ? $v.querySelector('.rail').scrollLeft : 0;
+  $v.innerHTML = h; $v.scrollTop = y; renderTab();
+  var r = $v.querySelector('.rail'); if (r && rail) r.scrollLeft = rail;
+  var bind = function (id, key) { var q = document.getElementById(id); if (q) q.addEventListener('input', function () { S[key] = q.value; var pos = q.selectionStart; render(true); var n = document.getElementById(id); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { } }); };
+  bind('q', 'q'); bind('pq', 'pq');
+  var f = document.getElementById('form'); if (f) f.addEventListener('submit', submitForm);
+  var fi = document.getElementById('f-img'); if (fi) fi.addEventListener('change', function () { var file = fi.files && fi.files[0]; if (!file) return; readImg(file, function (u) { if (!u) return toast('Image illisible'); S.formImg = u; document.getElementById('f-prev').innerHTML = '<img src="' + u + '" alt="">'; }); });
+  var fd = document.querySelector('details.find'); if (fd) fd.addEventListener('toggle', function () { S.findOpen = fd.open; });
+  var sd = document.querySelector('details.collapse:not(.find)'); if (sd) sd.addEventListener('toggle', function () { S.statOpen = sd.open; });
+  if (c.v === 'recap' && S.hold) startCd();
+  if (c.v === 'notifs') setTimeout(TO.markNotifsRead, 400);
+}
+function leaveRecap() { if (S.hold) { TO.release(S.hold.id); S.hold = null; } }
+function fmtCd(ms) { var s = Math.ceil(ms / 1000), m = Math.floor(s / 60); return (m < 10 ? '0' : '') + m + 'min ' + (s % 60 < 10 ? '0' : '') + (s % 60) + 's'; }
+function startCd() {
+  if (S.cd) clearInterval(S.cd);
+  var tick = function () {
+    if (!S.hold) return; var left = TO.holdLeft(S.hold.id), el = document.getElementById('cd');
+    if (el) el.textContent = fmtCd(left);
+    if (left <= 0) { clearInterval(S.cd); S.cd = null; closeSheet(); S.hold = null; S.pay = null; S.stack.pop(); render(); toast('Le temps est écoulé : vos billets ont été remis en vente.'); }
+  };
+  S.cd = setInterval(tick, 1000); tick();
+}
+function push(o) { S.stack.push(o); try { history.pushState({ n: S.stack.length }, ''); } catch (e) { } render(); }
+function back() { if (S.stack.length) { try { history.back(); return; } catch (e) { } if (current().v === 'recap') leaveRecap(); S.stack.pop(); render(); } }
+window.addEventListener('popstate', function () { if (document.getElementById('sheet')) { closeSheet(); } if (S.stack.length) { if (current().v === 'recap') leaveRecap(); S.stack.pop(); render(); } });
+
+/* ---------- feuilles ---------- */
+function sheet(html, keep) {
+  var cur = document.getElementById('sheet');
+  if (keep && cur) { cur.innerHTML = '<div class="grab"></div>' + html; return; }
+  $l.innerHTML = '<div class="scrim" data-act="closesheet"><div class="sheet" role="dialog" aria-modal="true" id="sheet"><div class="grab"></div>' + html + '</div></div>';
+}
+function closeSheet() { $l.innerHTML = ''; S.openOrder = null; if (S.camStop) { S.camStop(); S.camStop = null; } }
+function sheetCreate() {
+  sheet('<h3>Que souhaitez-vous créer ?</h3>' +
+    '<button class="choice" data-act="newev"><span class="circle">' + ic('calplus') + '</span><span><b>Créer un événement</b><span>Concerts, conférences, ateliers...</span></span>' + ic('chevr', 'chev') + '</button>' +
+    '<button class="choice" data-act="newco"><span class="circle">' + ic('bag') + '</span><span><b>Créer une cotisation</b><span>Lancez une collecte entre amis, collègues ou proches</span></span>' + ic('chevr', 'chev') + '</button>' +
+    '<button class="cancel" data-act="closesheet">Annuler</button>');
+}
+function sheetCountry() {
+  sheet('<h3>Choisir un pays</h3>' + Object.keys(COUNTRIES).map(function (k) { return '<button class="choice" data-act="setcountry" data-v="' + k + '" aria-pressed="' + (S.country === k) + '"><span class="circle">' + flagSvg[k].replace('class="flag"', 'class="flag" style="width:34px;height:23px"') + '</span><span><b>' + COUNTRIES[k].name + '</b><span>Devise : F CFA</span></span>' + (S.country === k ? '<span class="chev" style="color:var(--accent)">' + ic('check') + '</span>' : '') + '</button>'; }).join('') + '<button class="cancel" data-act="closesheet">Fermer</button>');
+}
+function sheetTickets(orderId, fresh) {
+  var o = TO.find(db().orders, orderId); if (!o) return closeSheet();
+  var ts = TO.ticketsOf(orderId).filter(function (t) { return t.status !== 'transferred' && t.status !== 'exchanged'; }); S.openOrder = orderId;
+  sheet('<div class="success-ic">' + ic(o.status === 'cancelled' ? 'x' : 'check') + '</div><h3 style="margin-bottom:6px">' + (o.status === 'cancelled' ? 'Commande annulée' : fresh ? 'Paiement confirmé' : 'Vos billets') + '</h3>' +
+    '<p class="hint" style="margin-bottom:14px">' + (o.status === 'cancelled' ? 'L\'organisateur a annulé cette commande.' : fresh ? 'Vos billets sont prêts. Présentez le QR code à l\'entrée : chaque billet ne sert qu\'une fois.' : 'Présentez le QR code à l\'entrée. Chaque billet ne sert qu\'une fois.') + '</p>' +
+    '<div class="tk-rail" id="tkrail">' + ts.map(tkCard).join('') + '</div>' +
+    (ts.length > 1 ? '<p class="hint">' + ts.length + ' billets : faites glisser pour les voir tous.</p>' : '') +
+    '<p class="hint">Commande ' + esc(o.ref) + (o.discount ? ' · réduction ' + fmt(o.discount) + ' F' : '') + '</p>' +
+    '<button class="btn block" data-act="' + (fresh ? 'goorders' : 'closesheet') + '">' + (fresh ? 'Voir mes commandes' : 'Fermer') + '</button>');
+}
+function shareText(t) { var ev = getEv(t.evId); return 'Billet Ticket Option\n' + (ev ? ev.title + '\n' + dateText(ev, t.dateIdx) + ' · ' + ev.venue + ', ' + ev.city + '\n' : '') + t.tierName + ' · ' + t.holder + '\nCode : ' + t.code; }
+function sheetTk(code, title) {
+  var t = TO.lookup(code); if (!t) return closeSheet();
+  var ev = getEv(t.evId), live = t.status === 'valid' && ev && !TO.isPast(ev, t.dateIdx);
+  var others = ev ? ev.tiers.filter(function (x) { var cur = TO.find(ev.tiers, t.tierId); return x.id !== t.tierId && x.price >= (cur ? cur.price : 0) && TO.remaining(x) > 0; }) : [];
+  sheet('<h3 style="margin-bottom:4px">' + esc(title || (ev ? ev.title : 'Billet')) + '</h3><p class="hint">' + esc(t.tierName) + ' · ' + (ev ? dateText(ev, t.dateIdx) : '') + '</p>' +
+    '<div class="qrbig' + (live ? '' : ' dim') + '">' + TO.qr(t.code) + '</div><div style="text-align:center;margin:10px 0 14px"><b class="code" style="font-family:var(--f-display);font-size:24px;letter-spacing:.06em">' + t.code + '</b><div class="who" style="color:var(--muted);margin:4px 0 8px">' + esc(t.holder) + '</div>' + tkChip(t) + '</div>' +
+    (t.status === 'transferred' ? '<p class="hint">Transféré à ' + esc(t.transferName || '') + '. Le nouveau billet porte le code ' + esc(t.transferredTo || '') + '.</p>' : '') +
+    (t.status === 'exchanged' ? '<p class="hint">Ce billet a été échangé. Le nouveau billet porte le code ' + esc(t.exchangedTo || '') + '.</p>' : '') +
+    '<div class="acts2">' + (live ? '<button class="btn ghost" data-act="transfer" data-code="' + t.code + '">' + ic('send') + ' Transférer</button>' + (others.length ? '<button class="btn ghost" data-act="exchange" data-code="' + t.code + '">' + ic('swap') + ' Échanger</button>' : '') : '') +
+    '<button class="btn ghost" data-act="sharetk" data-code="' + t.code + '">' + ic('upload') + ' Partager</button><button class="btn ghost" data-act="copycode" data-code="' + t.code + '">' + ic('copy') + ' Copier le code</button></div><button class="cancel" data-act="closesheet">Fermer</button>');
+}
+function sheetTransfer(code) {
+  var t = TO.lookup(code); if (!t) return;
+  sheet('<h3>Transférer le billet</h3><p class="hint" style="margin-bottom:14px">Le billet ' + esc(t.tierName) + ' recevra un nouveau code au nom de la personne. Votre ancien code ne fonctionnera plus.</p>' +
+    '<div class="field"><label for="x-name">Nom de la personne</label><input id="x-name" autocomplete="off"></div><div class="field"><label for="x-phone">Téléphone</label><input id="x-phone" inputmode="tel" autocomplete="off" placeholder="70 00 00 00"></div><p id="x-err" class="cp-err" role="alert"></p>' +
+    '<button class="btn block" data-act="transfer-go" data-code="' + code + '">Transférer</button><button class="cancel" data-act="tkopen" data-code="' + code + '">Retour</button>');
+}
+function sheetExchange(code) {
+  var t = TO.lookup(code), ev = t && getEv(t.evId); if (!ev) return;
+  var cur = TO.find(ev.tiers, t.tierId);
+  sheet('<h3>Échanger le billet</h3><p class="hint" style="margin-bottom:14px">Billet actuel : ' + esc(t.tierName) + ' (' + money(cur.price) + '). Vous pouvez passer à un billet de même prix ou plus cher en payant la différence. Pas de remboursement vers un billet moins cher.</p>' +
+    ev.tiers.map(function (x) { var rem = TO.remaining(x), diff = x.price - cur.price, off = x.id === t.tierId || diff < 0 || rem < 1; return '<button class="choice" ' + (off ? 'disabled' : 'data-act="xchg" data-code="' + code + '" data-tier="' + x.id + '"') + ' style="' + (off ? 'opacity:.45' : '') + '"><span><b>' + esc(x.name) + '</b><span>' + money(x.price) + (x.id === t.tierId ? ' · billet actuel' : rem < 1 ? ' · épuisé' : diff < 0 ? ' · moins cher' : diff === 0 ? ' · échange gratuit' : ' · + ' + money(diff)) + '</span></span>' + (off ? '' : ic('chevr', 'chev')) + '</button>'; }).join('') +
+    '<button class="cancel" data-act="tkopen" data-code="' + code + '">Retour</button>');
+}
+function sheetProfile() {
+  var b = db().buyer;
+  sheet('<h3>Mon profil</h3><div class="field"><label for="p-name">Nom complet</label><input id="p-name" value="' + esc(b.name) + '"></div><div class="field"><label for="p-phone">Téléphone</label><input id="p-phone" inputmode="tel" value="' + esc(b.phone) + '"></div><div class="field"><label for="p-mail">E-mail</label><input id="p-mail" type="email" value="' + esc(b.email) + '"></div><button class="btn block" data-act="saveprofile">Enregistrer</button><button class="cancel" data-act="closesheet">Annuler</button>');
+}
+function sheetInstall() {
+  var steps = isIOS()
+    ? '<li><span>Ouvrez cette page dans <b>Safari</b>.</span></li><li><span>Touchez le bouton Partager ' + ic('upload') + ' en bas de l\'écran.</span></li><li><span>Choisissez <b>Sur l\'écran d\'accueil</b>, puis <b>Ajouter</b>.</span></li>'
+    : '<li><span>Ouvrez cette page dans <b>Chrome</b>.</span></li><li><span>Touchez le menu (trois points) en haut à droite.</span></li><li><span>Choisissez <b>Installer l\'application</b> ou <b>Ajouter à l\'écran d\'accueil</b>.</span></li>';
+  sheet('<h3>Installer Ticket Option</h3><p class="hint" style="margin-bottom:18px">L\'application s\'ouvre en plein écran, avec son icône, et garde vos billets même sans réseau.</p><ol class="steps">' + steps + '</ol><button class="btn block" data-act="closesheet">Compris</button><p class="note">L\'installation demande que le site soit publié en ligne en https.</p>');
+}
+function sheetConfirm(msg, label, act, id) { sheet('<h3>Confirmer</h3><p class="hint" style="margin-bottom:18px;font-size:15px">' + msg + '</p><button class="btn block danger" data-act="' + act + '" data-id="' + (id || '') + '">' + label + '</button><button class="cancel" data-act="closesheet">Non, garder</button>'); }
+function sheetThanks(title, text) { sheet('<div class="success-ic">' + ic('check') + '</div><h3 style="margin-bottom:6px">' + title + '</h3><p class="hint" style="margin-bottom:16px">' + text + '</p><button class="btn block" data-act="closesheet">Fermer</button>'); }
+
+/* contribution */
+function sheetContrib(id) {
+  var c = getCo(id); if (!c) return; var b = db().buyer;
+  sheet('<h3>Contribuer</h3><p class="hint" style="margin-bottom:14px">' + esc(c.title) + '</p><div class="chips" id="amts">' + [1000, 2000, 5000, 10000].map(function (a) { return '<button type="button" class="opt" data-act="amt" data-v="' + a + '">' + fmt(a) + ' F</button>'; }).join('') + '</div>' +
+    '<div class="field"><label for="c-amt">Montant en F CFA</label><input id="c-amt" type="number" inputmode="numeric" min="500" placeholder="Autre montant"></div><div class="field"><label for="c-name">Votre nom</label><input id="c-name" value="' + esc(b.name) + '"></div>' +
+    '<label class="check"><input id="c-anon" type="checkbox"><span>Rester anonyme</span></label><p id="c-err" class="cp-err" role="alert"></p><button class="btn block" data-act="contrib-go" data-id="' + id + '">Continuer</button><button class="cancel" data-act="closesheet">Annuler</button>');
+}
+
+/* paiement */
+function payStart(ctx) { S.pay = { ctx: ctx, step: 'method', country: PAYC[S.country] ? S.country : 'CI', method: null, phone: db().buyer.phone || '' }; sheetPay(false); }
+function sheetPay(keep) {
+  var p = S.pay, c = PAYC[p.country], m = p.method ? PAYM[p.method] : null, amt = p.ctx.amount, h;
+  if (p.step === 'method') {
+    h = '<div class="ph"><button data-act="payback">' + ic('back') + ' Retour</button><b class="amt">' + money(amt) + '</b></div>' +
+      '<div class="field"><label for="pcountry">Pays <i>*</i></label><select id="pcountry">' + Object.keys(PAYC).map(function (k) { return '<option value="' + k + '"' + (k === p.country ? ' selected' : '') + '>' + PAYC[k].name + '</option>'; }).join('') + '</select></div>' +
+      '<div class="mgrid">' + c.m.map(function (k) { var x = PAYM[k]; return '<button class="mt' + (p.method === k ? ' on' : '') + '" data-act="paym" data-v="' + k + '" aria-pressed="' + (p.method === k) + '"><span class="mlogo" style="background:' + x.bg + ';color:' + x.fg + '">' + (x.abbr || ic('card')) + '</span><span>' + x.name + '</span></button>'; }).join('') + '</div>' +
+      '<div class="box sumbox"><div class="rl"><span>Sous-total</span><b>' + money(amt) + '</b></div><div class="rl tot"><span>Total</span><b>' + money(amt) + '</b></div></div>' +
+      '<button class="btn block" data-act="paygo"' + (m ? '' : ' disabled') + '>' + (m ? 'Payer avec ' + m.name : 'Choisissez un moyen de paiement') + '</button><p class="note">' + (PAY.demo ? 'Mode démonstration : aucun argent n\'est prélevé.' : 'Paiement sécurisé.') + '</p>';
+  } else if (p.step === 'phone') {
+    h = '<div class="ph"><button data-act="payback">' + ic('back') + ' Retour</button><b class="amt">' + money(amt) + '</b></div><h3 style="margin:6px 0 4px">' + m.name + '</h3><p class="hint" style="margin-bottom:14px">' + m.hint + '</p>' +
+      '<div class="field"><label for="pp">Numéro ' + m.name + '</label><div class="dial"><span>' + c.dial + '</span><input id="pp" inputmode="tel" autocomplete="tel" value="' + esc(p.phone) + '" placeholder="07 00 00 00 00"></div></div><p id="pp-err" class="cp-err" role="alert"></p>' +
+      '<button class="btn block" data-act="payconfirm">Confirmer le paiement de ' + money(amt) + '</button>';
+  } else if (p.step === 'card') {
+    h = '<div class="ph"><button data-act="payback">' + ic('back') + ' Retour</button><b class="amt">' + money(amt) + '</b></div><div class="success-ic" style="background:var(--accent-soft);color:var(--accent)">' + ic('card') + '</div><h3 style="margin-bottom:6px">Carte bancaire</h3><p class="hint" style="margin-bottom:16px">' + m.hint + (PAY.demo ? ' (simulation)' : '') + '</p><button class="btn block" data-act="payconfirm">Continuer vers la banque</button>';
+  } else if (p.step === 'wait') {
+    h = '<div class="spin" aria-hidden="true"></div><h3 style="margin-bottom:6px">En attente de confirmation</h3><p class="hint" style="margin-bottom:16px">' + (PAYM[p.method].phone ? 'Confirmez le paiement de ' + money(amt) + ' sur votre téléphone (' + PAYM[p.method].name + ').' : 'Terminez le paiement sur la page de votre banque.') + '</p>' +
+      (PAY.demo ? '<div class="demo"><b>Démonstration</b><p>Simulez la réponse de l\'opérateur :</p><div class="two"><button class="btn sm" data-act="payok">Paiement confirmé</button><button class="btn sm line" data-act="payfail">Paiement refusé</button></div></div>' : '') + '<button class="cancel" data-act="payback">Annuler</button>';
+  } else {
+    h = '<div class="success-ic" style="background:var(--accent-soft);color:var(--accent)">' + ic('x') + '</div><h3 style="margin-bottom:6px">Paiement non abouti</h3><p class="hint" style="margin-bottom:16px">' + esc(p.err || 'Le paiement a été refusé ou a expiré. Vous n\'avez pas été débité.') + '</p><button class="btn block" data-act="payretry">Réessayer</button><button class="cancel" data-act="closesheet">Fermer</button>';
+  }
+  sheet(h, keep);
+  var sel = document.getElementById('pcountry'); if (sel) sel.addEventListener('change', function () { p.country = sel.value; if (p.method && PAYC[p.country].m.indexOf(p.method) < 0) p.method = null; sheetPay(true); });
+}
+function payDone() {
+  var p = S.pay, ctx = p.ctx, M = PAYM[p.method], pay = { method: p.method, methodName: M.name, phone: p.phone, country: p.country, ref: PAY.ref() }, r;
+  if (ctx.kind === 'order') {
+    r = TO.issue({ evId: ctx.evId, dateIdx: ctx.dateIdx, items: ctx.items, buyer: ctx.buyer, channel: 'app', holdId: ctx.holdId, coupon: ctx.coupon, payment: pay });
+    if (r.error) { p.step = 'fail'; p.err = r.error + ' Aucun montant ne sera prélevé.'; return sheetPay(true); }
+    TO.setBuyer(ctx.buyer); var ev = getEv(ctx.evId); if (ev) ev.tiers.forEach(function (t) { delete S.qty[ev.id + ':' + t.id]; }); delete S.coupon[ctx.evId];
+    S.hold = null; S.pay = null; S.stack = []; S.tab = 'orders'; S.otab = 'tickets'; S.osub = 'upcoming'; render(); sheetTickets(r.order.id, true);
+  } else if (ctx.kind === 'contrib') {
+    r = TO.contribute({ collId: ctx.collId, amount: ctx.amount, name: ctx.name, anonymous: ctx.anonymous, payment: pay });
+    if (r.error) { p.step = 'fail'; p.err = r.error; return sheetPay(true); }
+    S.pay = null; render(true); sheetThanks('Merci pour votre contribution', money(ctx.amount) + ' ajoutés à « ' + esc(r.collect.title) + ' ». Référence ' + esc(r.contrib.ref) + '.');
+  } else {
+    r = TO.exchangeTicket(ctx.code, ctx.tierId, pay);
+    if (r.error) { p.step = 'fail'; p.err = r.error; return sheetPay(true); }
+    S.pay = null; render(true); sheetTk(r.ticket.code, 'Échange effectué');
+  }
+}
+
+/* retrait, contrôle d'entrée, participants, aide, avis */
+function sheetPayout() {
+  var w = TO.walletOf(db().device), min = db().settings.minPayout || 1000;
+  sheet('<h3>Retirer mes gains</h3><p class="hint" style="margin-bottom:14px">Disponible : ' + money(w.available) + ' · minimum ' + money(min) + '. Envoi sous 24 h sur votre compte Mobile Money.</p>' +
+    '<div class="field"><label for="w-amt">Montant en F CFA</label><input id="w-amt" type="number" inputmode="numeric" value="' + w.available + '" min="' + min + '" max="' + w.available + '"></div>' +
+    '<div class="field"><label for="w-m">Recevoir sur</label><select id="w-m">' + ['orange', 'mtn', 'moov', 'wave'].map(function (k) { return '<option value="' + k + '">' + PAYM[k].name + '</option>'; }).join('') + '</select></div>' +
+    '<div class="field"><label for="w-ph">Numéro</label><input id="w-ph" inputmode="tel" value="' + esc(db().buyer.phone) + '" placeholder="70 00 00 00"></div><p id="w-err" class="cp-err" role="alert"></p><button class="btn block" data-act="payout-go">Demander le retrait</button><button class="cancel" data-act="closesheet">Annuler</button>');
+}
+function gateVerdict(r) {
+  var cls = r.status === 'ok' || r.status === 'valid' ? 'ok' : r.status === 'used' || r.status === 'replaced' ? 'warn' : 'bad', t = r.ticket;
+  var title = { ok: 'Entrée autorisée', valid: 'Billet valide', used: 'Déjà utilisé', cancelled: 'Billet annulé', unknown: 'Billet inconnu', invalid: 'Code illisible', wrongevent: 'Autre événement', replaced: 'Billet remplacé' }[r.status];
+  return '<div class="verdict ' + cls + '" role="status" aria-live="assertive"><b>' + ic(cls === 'ok' ? 'check' : 'warn') + title + '</b><span>' + esc(r.message) + '</span>' + (t ? '<small>' + esc(t.holder) + ' · ' + esc(t.tierName) + '</small>' : '') + '</div>';
+}
+function gateCounts(id) { var n = 0, u = 0; db().tickets.forEach(function (t) { if (t.evId !== id || t.status === 'cancelled' || t.status === 'transferred' || t.status === 'exchanged') return; n++; if (t.status === 'used') u++; }); return u + ' / ' + n; }
+function sheetGate(id) {
+  var ev = getEv(id); if (!ev) return;
+  var cam = !!(window.BarcodeDetector && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  sheet('<h3>Contrôle d\'entrée</h3><p class="hint" style="margin-bottom:12px">' + esc(ev.title) + ' · entrées <b id="gcnt">' + gateCounts(id) + '</b></p><div class="field"><label for="gate-code">Code du billet</label><input id="gate-code" placeholder="TO-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>' +
+    '<div class="two"><button class="btn block" data-act="gate-go" data-id="' + id + '">Valider l\'entrée</button><button class="btn block line" data-act="gate-dry" data-id="' + id + '">Vérifier</button></div>' +
+    (cam ? '<button class="btn block ghost" style="margin-top:10px" data-act="gate-cam" data-id="' + id + '">' + ic('scan') + ' Scanner avec la caméra</button><div class="camwrap" id="camwrap" hidden><video id="camvid" playsinline muted></video></div>' : '') +
+    '<div id="gate-res" style="margin-top:14px"></div><button class="cancel" data-act="closesheet">Fermer</button>');
+}
+function doGate(id, dry, raw) {
+  var inp = document.getElementById('gate-code'), v = raw != null ? raw : (inp ? inp.value : ''); if (!String(v).trim()) { if (inp) inp.focus(); return; }
+  var r = TO.checkIn(v, { evId: id, dryRun: dry }), box = document.getElementById('gate-res'); if (box) box.innerHTML = gateVerdict(r);
+  var c = document.getElementById('gcnt'); if (c) c.textContent = gateCounts(id); if (inp) { inp.value = ''; inp.focus(); }
+}
+function gateCam(id) {
+  var vid = document.getElementById('camvid'), wrap = document.getElementById('camwrap'), det;
+  try { det = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { return toast('Le scan par caméra n\'est pas pris en charge ici.'); }
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(function (stream) {
+    if (!document.getElementById('camvid')) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+    var run = true, last = '', at = 0; vid.srcObject = stream; wrap.hidden = false; vid.play().catch(function () { });
+    S.camStop = function () { run = false; try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) { } };
+    (function loop() { if (!run) return; det.detect(vid).then(function (cs) { if (cs && cs[0]) { var x = cs[0].rawValue, now = Date.now(); if (x !== last || now - at > 3000) { last = x; at = now; doGate(id, false, x); } } }).catch(function () { }).then(function () { setTimeout(loop, 250); }); })();
+  }).catch(function () { toast('Accès à la caméra refusé. Tapez le code du billet.'); });
+}
+function sheetGuests(id) {
+  var d = db(), ev = getEv(id), os = d.orders.filter(function (o) { return o.evId === id && o.status !== 'cancelled'; });
+  sheet('<h3>Participants</h3><p class="hint" style="margin-bottom:12px">' + esc(ev.title) + '</p>' + (os.length ? os.slice(0, 60).map(function (o) { var n = o.lines.reduce(function (a, l) { return a + l.qty; }, 0); return '<div class="rl guest"><span><b>' + esc(o.buyer.name) + '</b><small>' + esc(o.buyer.phone || '') + ' · ' + esc(o.ref) + '</small></span><b>' + n + ' billet' + (n > 1 ? 's' : '') + '</b></div>'; }).join('') + (os.length > 60 ? '<p class="hint">+ ' + (os.length - 60) + ' autres commandes</p>' : '') : emptyBox('users', 'Aucun participant', 'Les acheteurs apparaîtront ici.', '')) + '<button class="cancel" data-act="closesheet">Fermer</button>');
+}
+function sheetHelp() {
+  var q = [['Comment retrouver mes billets ?', 'Allez dans Commandes puis ouvrez « Vous ne trouvez pas vos tickets ? ». Entrez la référence de commande ou le numéro de téléphone utilisé à l\'achat.'], ['Comment entrer à l\'événement ?', 'Présentez le QR code de votre billet à l\'entrée. Chaque code ne fonctionne qu\'une fois.'], ['Puis-je offrir ou échanger un billet ?', 'Oui. Ouvrez le billet puis choisissez Transférer ou Échanger. L\'échange est possible vers un billet de même prix ou plus cher.'], ['Combien de temps ai-je pour payer ?', 'Vos billets sont réservés 20 minutes à partir du récapitulatif de commande.'], ['Quand puis-je retirer mes gains ?', 'Les ventes sont disponibles après la fin de votre événement. Les frais de service sont retirés automatiquement.']];
+  sheet('<h3>Aide et support</h3>' + q.map(function (x) { return '<details class="faq"><summary>' + x[0] + ic('chevd', 'chev') + '</summary><p>' + x[1] + '</p></details>'; }).join('') + '<h4 class="subh" style="margin-top:18px">Une autre question ?</h4><div class="field"><label for="h-c">Votre téléphone ou e-mail</label><input id="h-c" value="' + esc(db().buyer.phone || db().buyer.email) + '"></div><div class="field"><label for="h-t">Votre message</label><textarea id="h-t" rows="3"></textarea></div><p id="h-err" class="cp-err" role="alert"></p><button class="btn block" data-act="help-go">Envoyer</button><button class="cancel" data-act="closesheet">Fermer</button>');
+}
+function sheetRate() {
+  S.stars = 0;
+  sheet('<h3>Noter l\'application</h3><p class="hint" style="margin-bottom:12px">Votre avis nous aide à améliorer Ticket Option.</p><div class="stars" id="stars">' + [1, 2, 3, 4, 5].map(function (n) { return '<button data-act="star" data-v="' + n + '" aria-label="' + n + ' étoile' + (n > 1 ? 's' : '') + '">' + ic('star') + '</button>'; }).join('') + '</div><div class="field"><label for="r-t">Un commentaire ? (facultatif)</label><textarea id="r-t" rows="3"></textarea></div><p id="r-err" class="cp-err" role="alert"></p><button class="btn block" data-act="rate-go">Envoyer</button><button class="cancel" data-act="closesheet">Plus tard</button>');
+}
+
+/* ---------- actions ---------- */
+function copyCode(code) {
+  var ok = function () { toast('Code copié'); }, ko = function () { toast('Copiez le code à la main : ' + code); };
+  try { navigator.clipboard.writeText(code).then(ok, ko); } catch (e) { ko(); }
+}
+function applyTheme() { var t = TO.pref('theme'), r = document.documentElement; if (t === 'dark' || t === 'light') r.setAttribute('data-theme', t); else r.removeAttribute('data-theme'); }
+function val(id) { var e = document.getElementById(id); return e ? e.value : ''; }
+function buyerFrom() { return { name: val('g-name').trim(), phone: val('g-phone').trim(), email: val('g-mail').trim() }; }
+document.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-act]'); if (!el) return;
+  var a = el.getAttribute('data-act'), id = el.getAttribute('data-id'), code = el.getAttribute('data-code'), v = el.getAttribute('data-v'), c = current();
+  if (a === 'closesheet' && el.classList.contains('scrim') && e.target !== el) return;
+  switch (a) {
+    case 'tab': leaveRecap(); S.stack = []; S.tab = v; render(); break;
+    case 'event': S.dateIdx = 0; S.detailTab = 'tickets'; S.cpnOpen = false; push({ v: 'event', id: id }); break;
+    case 'viewev': S.dateIdx = 0; S.detailTab = 'tickets'; push({ v: 'event', id: id }); break;
+    case 'back': back(); break;
+    case 'create': sheetCreate(); break;
+    case 'closesheet': closeSheet(); break;
+    case 'newev': closeSheet(); push({ v: 'form', kind: 'ev' }); break;
+    case 'newco': closeSheet(); push({ v: 'form', kind: 'co' }); break;
+    case 'editev': closeSheet(); push({ v: 'form', kind: 'ev', id: id }); break;
+    case 'country': sheetCountry(); break;
+    case 'setcountry': S.country = v; TO.pref('country', S.country); closeSheet(); render(true); break;
+    case 'wallet': push({ v: 'wallet' }); break;
+    case 'favs': push({ v: 'favs' }); break;
+    case 'notif': push({ v: 'notifs' }); break;
+    case 'community': push({ v: 'community' }); break;
+    case 'pubpage': push({ v: 'pubpage' }); break;
+    case 'points': push({ v: 'points' }); break;
+    case 'settings': push({ v: 'settings' }); break;
+    case 'allev': push({ v: 'all', kind: 'ev' }); break;
+    case 'allco': push({ v: 'all', kind: 'co' }); break;
+    case 'manage': push({ v: 'manage', id: id }); break;
+    case 'fav': e.stopPropagation(); TO.toggleFav(id); break;
+    case 'dtab': S.detailTab = v; render(true); break;
+    case 'date': S.dateIdx = +el.getAttribute('data-i'); render(true); break;
+    case 'inc': case 'dec': var k = el.getAttribute('data-k'); S.qty[k] = Math.max(0, Math.min(10, (S.qty[k] || 0) + (a === 'inc' ? 1 : -1))); render(true); break;
+    case 'clearcart': var evc = getEv(c.id); evc.tiers.forEach(function (t) { delete S.qty[evc.id + ':' + t.id]; }); delete S.coupon[evc.id]; S.cpnOpen = false; render(true); break;
+    case 'cpn-toggle': S.cpnOpen = !S.cpnOpen; render(true); var ci = document.getElementById('cpn'); if (ci) ci.focus(); break;
+    case 'cpn-off': delete S.coupon[c.id]; render(true); break;
+    case 'cpn-apply':
+      var evk = getEv(c.id), T0 = cartTotal(evk), rr = TO.checkCoupon(val('cpn'), evk.id, T0.sub), er = document.getElementById('cpn-err');
+      if (rr.error) { if (er) er.textContent = rr.error; break; }
+      S.coupon[evk.id] = { code: rr.coupon.code }; S.cpnOpen = false; render(true); toast('Code appliqué : − ' + money(rr.discount)); break;
+    case 'checkout':
+      var evh = getEv(c.id), Th = cartTotal(evh), hr = TO.hold({ evId: evh.id, dateIdx: S.dateIdx, items: Th.items });
+      if (hr.error) { toast(hr.error); render(true); break; }
+      S.hold = { id: hr.hold.id, evId: evh.id, dateIdx: S.dateIdx, items: hr.hold.items }; push({ v: 'recap', id: evh.id }); break;
+    case 'topay':
+      var H = S.hold, by = buyerFrom(), ge = document.getElementById('gerr'), bad = function (m, f) { ge.textContent = m; var x = document.getElementById(f); if (x) x.focus(); };
+      if (!H || TO.holdLeft(H.id) <= 0) { toast('Le temps est écoulé. Reprenez la sélection.'); S.stack.pop(); S.hold = null; render(); break; }
+      if (by.name.length < 2) { bad('Entrez votre nom complet.', 'g-name'); break; }
+      if (!/^\d{8,10}$/.test(TO.digits(by.phone))) { bad('Entrez un numéro de téléphone de 8 à 10 chiffres.', 'g-phone'); break; }
+      if (by.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(by.email)) { bad('L\'adresse e-mail n\'est pas valide.', 'g-mail'); break; }
+      ge.textContent = ''; payStart({ kind: 'order', amount: H.total, evId: H.evId, dateIdx: H.dateIdx, items: H.items, buyer: by, holdId: H.id, coupon: H.code }); break;
+    /* paiement */
+    case 'payback':
+      if (!S.pay || S.pay.step === 'method' || S.pay.step === 'fail') { closeSheet(); S.pay = null; } else { S.pay.step = (S.pay.step === 'wait' && PAYM[S.pay.method].phone) ? 'phone' : 'method'; sheetPay(true); } break;
+    case 'paym': S.pay.method = v; sheetPay(true); break;
+    case 'paygo': S.pay.step = PAYM[S.pay.method].phone ? 'phone' : 'card'; sheetPay(true); break;
+    case 'payconfirm':
+      if (PAYM[S.pay.method].phone) { var ph = val('pp').trim(); if (!/^\d{8,10}$/.test(TO.digits(ph))) { document.getElementById('pp-err').textContent = 'Entrez un numéro de 8 à 10 chiffres.'; break; } S.pay.phone = ph; }
+      S.pay.step = 'wait'; sheetPay(true); break;
+    case 'payok': payDone(); break;
+    case 'payfail': S.pay.step = 'fail'; S.pay.err = ''; sheetPay(true); break;
+    case 'payretry': S.pay.step = 'method'; sheetPay(true); break;
+    /* billets */
+    case 'goorders': closeSheet(); S.stack = []; S.tab = 'orders'; render(); break;
+    case 'tkopen': sheetTk(code); break;
+    case 'transfer': sheetTransfer(code); break;
+    case 'transfer-go':
+      var tr = TO.transferTicket(code, { name: val('x-name'), phone: val('x-phone') });
+      if (tr.error) { document.getElementById('x-err').textContent = tr.error; break; }
+      render(true); sheetTk(tr.ticket.code, 'Billet transféré'); toast('Envoyez ce billet à ' + tr.ticket.holder + ' avec « Partager »'); break;
+    case 'exchange': sheetExchange(code); break;
+    case 'xchg':
+      var t0 = TO.lookup(code), ev0 = getEv(t0.evId), nt = TO.find(ev0.tiers, el.getAttribute('data-tier')), ot = TO.find(ev0.tiers, t0.tierId), diff = nt.price - ot.price;
+      if (diff > 0) { payStart({ kind: 'exchange', amount: diff, code: code, tierId: nt.id }); break; }
+      var xr = TO.exchangeTicket(code, nt.id); if (xr.error) { toast(xr.error); break; } render(true); sheetTk(xr.ticket.code, 'Échange effectué'); break;
+    case 'sharetk':
+      var tt = TO.lookup(code), txt = shareText(tt);
+      if (navigator.share) { navigator.share({ title: 'Billet Ticket Option', text: txt }).catch(function () { }); } else { try { navigator.clipboard.writeText(txt).then(function () { toast('Billet copié, collez-le dans un message'); }, function () { toast('Copiez le code : ' + code); }); } catch (x) { toast('Copiez le code : ' + code); } } break;
+    case 'copycode': copyCode(code); break;
+    case 'order': sheetTickets(id, false); break;
+    case 'claim': var cr = TO.claimOrders(val('claim')); if (cr.error) { document.getElementById('claim-err').textContent = cr.error; } else { S.findOpen = false; S.osub = 'upcoming'; render(true); toast(cr.count + ' commande' + (cr.count > 1 ? 's retrouvées' : ' retrouvée')); } break;
+    case 'otab': S.otab = v; render(); break;
+    case 'osub': S.osub = v; render(true); break;
+    case 'ptab': S.ptab = v; render(); break;
+    case 'psub': S.psub = v; render(true); break;
+    case 'ftab': S.ftab = v; render(); break;
+    /* cotisation */
+    case 'contribute': sheetContrib(id); break;
+    case 'amt': document.getElementById('c-amt').value = v; [].forEach.call(document.querySelectorAll('#amts .opt'), function (b) { b.classList.toggle('on', b === el); }); break;
+    case 'contrib-go':
+      var am = parseInt(val('c-amt'), 10), ce = document.getElementById('c-err');
+      if (isNaN(am) || am < 500) { ce.textContent = 'Le montant minimum est de 500 F CFA.'; break; }
+      payStart({ kind: 'contrib', amount: am, collId: id, name: val('c-name').trim(), anonymous: document.getElementById('c-anon').checked }); break;
+    /* organisateur */
+    case 'adddate': var dl = document.querySelectorAll('#dates .dr'), ld = dl[dl.length - 1], iso = ld ? ld.querySelector('.d-iso').value : ''; document.getElementById('dates').insertAdjacentHTML('beforeend', dateRow({ iso: iso ? TO.isoOf(new Date(iso + 'T12:00:00').getTime() + 86400000) : TO.isoOf(Date.now()), time: ld ? ld.querySelector('.d-time').value : '20:00' })); break;
+    case 'addtier': document.getElementById('tiers').insertAdjacentHTML('beforeend', tierRow({ name: '', price: 5000, stock: 100, sold: 0, desc: '' })); break;
+    case 'rmrow': var row = el.closest('.frow'), box = row.parentNode; if (box.children.length < 2) { toast(box.id === 'dates' ? 'Gardez au moins une date' : 'Gardez au moins un billet'); break; } row.remove(); break;
+    case 'gate': sheetGate(id); break;
+    case 'gate-go': doGate(id, false); break;
+    case 'gate-dry': doGate(id, true); break;
+    case 'gate-cam': gateCam(id); break;
+    case 'guests': sheetGuests(id); break;
+    case 'togglepub': var e2 = getEv(id); e2.status = e2.status === 'published' ? 'draft' : 'published'; TO.commit(); render(true); toast(e2.status === 'published' ? 'Événement publié' : 'Événement retiré de la vente'); break;
+    case 'delev': sheetConfirm('Supprimer cet événement ? Cette action est définitive.', 'Oui, supprimer', 'delev-yes', id); break;
+    case 'delev-yes': var dr = TO.deleteEvent(id); closeSheet(); if (dr.error) { toast(dr.error); break; } S.stack = []; S.tab = 'posts'; render(); toast('Événement supprimé'); break;
+    /* portefeuille */
+    case 'hidebal': S.hide = !S.hide; render(true); break;
+    case 'walletinfo': sheetThanks('Pourquoi « en attente » ?', 'Les recettes d\'un événement deviennent disponibles après sa dernière date. Cela protège les acheteurs en cas d\'annulation.'); break;
+    case 'payout': sheetPayout(); break;
+    case 'payout-go':
+      var pr = TO.requestPayout({ amount: val('w-amt'), method: val('w-m'), methodName: PAYM[val('w-m')].name, phone: val('w-ph') });
+      if (pr.error) { document.getElementById('w-err').textContent = pr.error; break; } closeSheet(); render(true); toast('Demande de retrait envoyée'); break;
+    /* compte */
+    case 'profile': sheetProfile(); break;
+    case 'saveprofile': TO.setBuyer({ name: val('p-name').trim(), phone: val('p-phone').trim(), email: val('p-mail').trim() }); closeSheet(); toast('Profil enregistré'); break;
+    case 'install': closeSheet(); installApp(); break;
+    case 'dismissinstall': TO.pref('install_dismissed', '1'); render(true); break;
+    case 'share': if (navigator.share) { navigator.share({ title: 'Ticket Option', url: location.href }).catch(function () { }); } else { copyCode(location.href); } break;
+    case 'settheme': TO.pref('theme', v); applyTheme(); render(true); break;
+    case 'resetme': sheetConfirm('Effacer toutes les données de cet appareil (commandes, billets, événements créés) et recharger la démonstration ?', 'Oui, tout effacer', 'resetme-yes'); break;
+    case 'resetme-yes': TO.reset(); closeSheet(); S.stack = []; S.tab = 'home'; S.qty = {}; S.coupon = {}; render(); toast('Données remises à zéro'); break;
+    case 'help': sheetHelp(); break;
+    case 'help-go': var hm = TO.sendMessage({ name: db().buyer.name, contact: val('h-c'), text: val('h-t') }); if (hm.error) { document.getElementById('h-err').textContent = hm.error; break; } closeSheet(); toast('Message envoyé. Nous vous répondons vite.'); break;
+    case 'rate': sheetRate(); break;
+    case 'star': S.stars = +v; [].forEach.call(document.querySelectorAll('#stars button'), function (b, i) { b.classList.toggle('on', i < S.stars); }); break;
+    case 'rate-go': var rv = TO.addReview({ stars: S.stars, text: val('r-t') }); if (rv.error) { document.getElementById('r-err').textContent = rv.error; break; } closeSheet(); toast('Merci pour votre avis'); break;
+  }
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target && e.target.id === 'gate-code') { e.preventDefault(); var b = document.querySelector('[data-act="gate-go"]'); if (b) b.click(); } if (e.key === 'Enter' && e.target && (e.target.id === 'cpn' || e.target.id === 'claim')) { e.preventDefault(); var b2 = document.querySelector(e.target.id === 'cpn' ? '[data-act="cpn-apply"]' : '[data-act="claim"]'); if (b2) b2.click(); } });
+
+/* ---------- installation (PWA) ---------- */
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); S.deferred = e; });
+window.addEventListener('appinstalled', function () { S.deferred = null; toast('Application installée'); render(true); });
+function installApp() {
+  if (S.deferred) { S.deferred.prompt(); S.deferred.userChoice.then(function () { S.deferred = null; render(true); }); return; }
+  sheetInstall();
+}
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); }); }
+
+/* ---------- synchronisation avec l'admin (même navigateur) ---------- */
+TO.on(function () {
+  var ae = document.activeElement;
+  if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return;
+  if (document.getElementById('sheet') && !S.openOrder) return;
+  render(true);
+  if (S.openOrder && document.getElementById('tkrail')) { var sc = document.getElementById('tkrail').scrollLeft; sheetTickets(S.openOrder, false); document.getElementById('tkrail').scrollLeft = sc; }
+});
+/* ---------- inscription / connexion ---------- */
+function authView(mode) {
+  var su = mode === 'signup';
+  var h = '<div class="authbox"><div class="auth-logo" aria-hidden="true">' + ic('ticket') + '</div><h1>Ticket Option</h1><p class="hint">' + (su ? 'Créez votre compte en 20 secondes. Vous ne le ferez qu\'une seule fois.' : 'Content de vous revoir. Entrez votre numéro et votre code secret.') + '</p>' +
+    '<div class="seg" role="tablist"><button role="tab" aria-selected="' + su + '" class="' + (su ? 'on' : '') + '" data-act="authmode" data-v="signup">Inscription</button><button role="tab" aria-selected="' + !su + '" class="' + (su ? '' : 'on') + '" data-act="authmode" data-v="login">Se connecter</button></div>' +
+    '<form id="authform" novalidate>' + (su ? '<div class="field"><label for="a-name">Nom complet</label><input id="a-name" autocomplete="name" placeholder="Ex. Awa Ouédraogo"></div>' : '') +
+    '<div class="field"><label for="a-phone">Téléphone</label><input id="a-phone" inputmode="tel" autocomplete="tel" placeholder="70 00 00 00"></div>' +
+    (su ? '<div class="field"><label for="a-mail">E-mail (facultatif)</label><input id="a-mail" type="email" autocomplete="email" placeholder="vous@exemple.com"></div>' : '') +
+    '<div class="field"><label for="a-pin">Code secret (4 à 6 chiffres)</label><input id="a-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="' + (su ? 'new-password' : 'current-password') + '" placeholder="••••"></div>' +
+    (su ? '<div class="field"><label for="a-pin2">Confirmez le code secret</label><input id="a-pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="••••"></div>' : '') +
+    '<p class="note-err" id="a-err" role="alert"></p><button class="btn block" type="submit" id="a-go">' + (su ? 'Créer mon compte' : 'Me connecter') + '</button></form>' +
+    (su ? '' : '<p class="hint" style="margin-top:14px">Code oublié ? Écrivez-nous depuis l\'aide de l\'application avec votre numéro, nous réinitialisons votre accès.</p>') +
+    '<p class="hint" style="margin-top:14px">' + (AUTH.online() ? 'Votre compte est enregistré en ligne : retrouvez-le sur n\'importe quel téléphone.' : 'Mode local : le compte est conservé sur cet appareil uniquement.') + '</p></div>';
+  var el = document.getElementById('auth'); if (!el) { el = document.createElement('div'); el.id = 'auth'; el.className = 'authscreen'; document.body.appendChild(el); }
+  el.innerHTML = h; el.hidden = false; document.getElementById('app').hidden = true;
+  var f = document.getElementById('authform'), g = function (i) { var x = document.getElementById(i); return x ? x.value.trim() : ''; };
+  f.addEventListener('submit', function (e) {
+    e.preventDefault(); var b = document.getElementById('a-go'), er = document.getElementById('a-err'); er.textContent = ''; b.disabled = true; b.textContent = 'Un instant…';
+    var p = su ? AUTH.signup({ name: g('a-name'), phone: g('a-phone'), email: g('a-mail'), pin: g('a-pin'), pin2: g('a-pin2') }) : AUTH.login({ phone: g('a-phone'), pin: g('a-pin') });
+    p.then(function (r) {
+      if (r.error) { er.textContent = r.error; b.disabled = false; b.textContent = su ? 'Créer mon compte' : 'Me connecter'; return; }
+      enterApp(r.user);
+    });
+  });
+  var first = document.getElementById(su ? 'a-name' : 'a-phone'); if (first) first.focus();
+}
+function enterApp(u) {
+  var b = db().buyer || {};
+  TO.setBuyer({ name: u.name, phone: u.phone, email: u.email || b.email || '' });
+  var el = document.getElementById('auth'); if (el) el.hidden = true; document.getElementById('app').hidden = false;
+  S.stack = []; S.tab = 'home'; render(); toast('Bienvenue ' + u.name.split(' ')[0]);
+}
+document.addEventListener('click', function (e) {
+  var el = e.target.closest && e.target.closest('[data-act=authmode],[data-act=logout]'); if (!el) return;
+  if (el.getAttribute('data-act') === 'authmode') authView(el.getAttribute('data-v'));
+  else { AUTH.logout(); closeSheet(); authView('login'); }
+});
+applyTheme();
+var _s = AUTH.session();
+if (_s) { document.getElementById('app').hidden = false; render(); } else authView('signup');
+
+})();
+</script>
+
+</body></html>
